@@ -1,0 +1,4 @@
+/home/dominik/projects/network/build/CMakeFiles/msgLog.dir
+/home/dominik/projects/network/build/CMakeFiles/network.dir
+/home/dominik/projects/network/build/CMakeFiles/server.dir
+/home/dominik/projects/network/build/CMakeFiles/simpleList.dir

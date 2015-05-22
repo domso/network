@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++11 -O3 -DNDEBUG    CMakeFiles/network.dir/main.cpp.o  -o network -rdynamic libsimpleList.a libserver.a libmsgLog.a -lpthread 

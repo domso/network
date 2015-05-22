@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dominik/projects/network/thread.cpp
+mutex
+-
+thread
+-
+stack
+-
+thread.h
+/home/dominik/projects/network/thread.h
+
+/home/dominik/projects/network/thread.h
+mutex
+-
+thread
+-
+stack
+-
+
