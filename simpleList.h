@@ -1,10 +1,14 @@
 
-
 class simpleList {
-	int store;
-	simpleList * next;
-	
+  simpleList * tail;
+  simpleList * front;
 public:
-	simpleList(int store);
-	operator +(int store);
+  void setParent(simpleList& list);
+  void setChild(simpleList& list);
+  
+  bool isLast();
+  bool isFirst();
+  simpleList * next();
+  simpleList * prev();
+  simpleList();
 };
