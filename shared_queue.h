@@ -1,47 +1,75 @@
-#ifndef udp_socket_h
-#define udp_socket_h
-#include <vector>
-#include<sys/socket.h>
-#include<arpa/inet.h>
-#include "ip_addr.h"
+#ifndef shared_queue_h
+#define shared_queue_h
+
+
+#include <queue>
+#include <mutex>
+#include "time.h"
 #include "semaphore.h"
 
-namespace network{
+
+namespace network
+{
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class udp_socket{
+template <typename queue_data_type>
+class shared_queue
+{
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 public:
-    udp_socket();
-    udp_socket ( const udp_socket& that );
-    ~udp_socket();
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    bool init ( uint16_t PORT );
-    void shutRD();
-    void shutWR();
-    void shutRDWR();
+    shared_queue() : msg_(0){
+        sem_init ( &semaphore_,0,0 );
+    }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    bool isValid();
-    uint16_t getPort();
+    shared_queue ( const shared_queue& that ) = delete;
+    ~shared_queue() {
+        sem_destroy ( &semaphore_ );
+    }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ssize_t send ( ip_addr& address, std::vector< char >& buffer,int msglen = -1, int flags = 0 );
-    ssize_t recv ( ip_addr& address, std::vector< char >& buffer, int flags = 0 );
+    int waitForData ( int sec2wait ) {
+        timespec ts;
+        if ( clock_gettime ( CLOCK_REALTIME, &ts ) == -1 ) {
+            return false;
+        }
+        ts.tv_sec += sec2wait;
+        return sem_timedwait ( &semaphore_, &ts ) == 0;
+        
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    queue_data_type getData() {
+        mutex_.lock();
+        queue_data_type data = queue_.front();
+        queue_.pop();
+        mutex_.unlock();
+        return data;
+    }
+    int getMSG(){
+		mutex_.lock();
+		int tmp = msg_;
+		mutex_.unlock();
+		return tmp;
+	}
+	void setMSG(int msg){
+		mutex_.lock();
+		msg_ = msg;
+		mutex_.unlock();
+	}
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    void push ( queue_data_type data ) {
+        mutex_.lock();
+        queue_.push ( data );
+        mutex_.unlock();
+        sem_post ( &semaphore_ );
+    }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 private:
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    struct udp_socket_data {
-        udp_socket_data();
-        ~udp_socket_data();
-        bool init ( uint16_t PORT );
-        sem_t semaphore;
-        int skt;
-        bool valid;
-        uint16_t port;
-        sockaddr_in local_address;
-    };
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    udp_socket_data* dataPTR_;
+    std::queue<queue_data_type> queue_;
+    std::mutex mutex_;
+    sem_t semaphore_;
+	int msg_;
 };
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 }
+
 
 #endif
