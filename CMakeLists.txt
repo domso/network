@@ -3,17 +3,28 @@ project(network)
 
 add_executable(network main.cpp)
 
-add_library(simpleList simpleList.cpp)
-target_link_libraries(network simpleList)
 
-add_library(server server.cpp)
-target_link_libraries(network server)
+add_library(UDPSocket udp_socket.cpp)
+target_link_libraries(network UDPSocket)
 
+add_library(address ip_addr.cpp)
+target_link_libraries(network address)
+
+add_library(udp_receiver udp_receiver.cpp)
+target_link_libraries(network udp_receiver)
+
+add_library(ip_pkg ip_pkg.cpp)
+target_link_libraries(network ip_pkg)
+
+add_library(run_lock run_lock.cpp)
+target_link_libraries(network run_lock)
 
 add_library(msgLog msgLog.cpp)
 target_link_libraries(network msgLog)
 
-target_link_libraries(server pthread)
+
+
+target_link_libraries(network pthread)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11")

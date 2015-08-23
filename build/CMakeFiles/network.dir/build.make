@@ -81,8 +81,11 @@ network_EXTERNAL_OBJECTS =
 
 network: CMakeFiles/network.dir/main.cpp.o
 network: CMakeFiles/network.dir/build.make
-network: libsimpleList.a
-network: libserver.a
+network: libUDPSocket.a
+network: libaddress.a
+network: libudp_receiver.a
+network: libip_pkg.a
+network: librun_lock.a
 network: libmsgLog.a
 network: CMakeFiles/network.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX executable network"

@@ -169,6 +169,15 @@ CMAKE_USE_RELATIVE_PATHS:BOOL=OFF
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Dependencies for target
+UDPSocket_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+address_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+ip_pkg_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
 msgLog_LIB_DEPENDS:STATIC=
 
 //Value Computed by CMake
@@ -176,6 +185,9 @@ network_BINARY_DIR:STATIC=/home/dominik/projects/network/build
 
 //Value Computed by CMake
 network_SOURCE_DIR:STATIC=/home/dominik/projects/network
+
+//Dependencies for target
+run_lock_LIB_DEPENDS:STATIC=
 
 //Dependencies for the target
 server_LIB_DEPENDS:STATIC=general;pthread;
@@ -185,6 +197,12 @@ simpleList_LIB_DEPENDS:STATIC=
 
 //Dependencies for target
 thread_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+udp_receiver_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+udp_worker_LIB_DEPENDS:STATIC=
 
 
 ########################

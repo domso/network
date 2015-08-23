@@ -39,8 +39,11 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
+  "CMakeFiles/UDPSocket.dir/DependInfo.cmake"
+  "CMakeFiles/address.dir/DependInfo.cmake"
+  "CMakeFiles/ip_pkg.dir/DependInfo.cmake"
   "CMakeFiles/msgLog.dir/DependInfo.cmake"
   "CMakeFiles/network.dir/DependInfo.cmake"
-  "CMakeFiles/server.dir/DependInfo.cmake"
-  "CMakeFiles/simpleList.dir/DependInfo.cmake"
+  "CMakeFiles/run_lock.dir/DependInfo.cmake"
+  "CMakeFiles/udp_receiver.dir/DependInfo.cmake"
   )

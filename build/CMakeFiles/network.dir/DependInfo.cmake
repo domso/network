@@ -10,8 +10,11 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/dominik/projects/network/build/CMakeFiles/simpleList.dir/DependInfo.cmake"
-  "/home/dominik/projects/network/build/CMakeFiles/server.dir/DependInfo.cmake"
+  "/home/dominik/projects/network/build/CMakeFiles/UDPSocket.dir/DependInfo.cmake"
+  "/home/dominik/projects/network/build/CMakeFiles/address.dir/DependInfo.cmake"
+  "/home/dominik/projects/network/build/CMakeFiles/udp_receiver.dir/DependInfo.cmake"
+  "/home/dominik/projects/network/build/CMakeFiles/ip_pkg.dir/DependInfo.cmake"
+  "/home/dominik/projects/network/build/CMakeFiles/run_lock.dir/DependInfo.cmake"
   "/home/dominik/projects/network/build/CMakeFiles/msgLog.dir/DependInfo.cmake"
   )
 

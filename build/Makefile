@@ -144,6 +144,45 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named UDPSocket
+
+# Build rule for target.
+UDPSocket: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 UDPSocket
+.PHONY : UDPSocket
+
+# fast build rule for target.
+UDPSocket/fast:
+	$(MAKE) -f CMakeFiles/UDPSocket.dir/build.make CMakeFiles/UDPSocket.dir/build
+.PHONY : UDPSocket/fast
+
+#=============================================================================
+# Target rules for targets named address
+
+# Build rule for target.
+address: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 address
+.PHONY : address
+
+# fast build rule for target.
+address/fast:
+	$(MAKE) -f CMakeFiles/address.dir/build.make CMakeFiles/address.dir/build
+.PHONY : address/fast
+
+#=============================================================================
+# Target rules for targets named ip_pkg
+
+# Build rule for target.
+ip_pkg: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ip_pkg
+.PHONY : ip_pkg
+
+# fast build rule for target.
+ip_pkg/fast:
+	$(MAKE) -f CMakeFiles/ip_pkg.dir/build.make CMakeFiles/ip_pkg.dir/build
+.PHONY : ip_pkg/fast
+
+#=============================================================================
 # Target rules for targets named msgLog
 
 # Build rule for target.
@@ -170,30 +209,78 @@ network/fast:
 .PHONY : network/fast
 
 #=============================================================================
-# Target rules for targets named server
+# Target rules for targets named run_lock
 
 # Build rule for target.
-server: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 server
-.PHONY : server
+run_lock: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 run_lock
+.PHONY : run_lock
 
 # fast build rule for target.
-server/fast:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/build
-.PHONY : server/fast
+run_lock/fast:
+	$(MAKE) -f CMakeFiles/run_lock.dir/build.make CMakeFiles/run_lock.dir/build
+.PHONY : run_lock/fast
 
 #=============================================================================
-# Target rules for targets named simpleList
+# Target rules for targets named udp_receiver
 
 # Build rule for target.
-simpleList: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 simpleList
-.PHONY : simpleList
+udp_receiver: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 udp_receiver
+.PHONY : udp_receiver
 
 # fast build rule for target.
-simpleList/fast:
-	$(MAKE) -f CMakeFiles/simpleList.dir/build.make CMakeFiles/simpleList.dir/build
-.PHONY : simpleList/fast
+udp_receiver/fast:
+	$(MAKE) -f CMakeFiles/udp_receiver.dir/build.make CMakeFiles/udp_receiver.dir/build
+.PHONY : udp_receiver/fast
+
+ip_addr.o: ip_addr.cpp.o
+.PHONY : ip_addr.o
+
+# target to build an object file
+ip_addr.cpp.o:
+	$(MAKE) -f CMakeFiles/address.dir/build.make CMakeFiles/address.dir/ip_addr.cpp.o
+.PHONY : ip_addr.cpp.o
+
+ip_addr.i: ip_addr.cpp.i
+.PHONY : ip_addr.i
+
+# target to preprocess a source file
+ip_addr.cpp.i:
+	$(MAKE) -f CMakeFiles/address.dir/build.make CMakeFiles/address.dir/ip_addr.cpp.i
+.PHONY : ip_addr.cpp.i
+
+ip_addr.s: ip_addr.cpp.s
+.PHONY : ip_addr.s
+
+# target to generate assembly for a file
+ip_addr.cpp.s:
+	$(MAKE) -f CMakeFiles/address.dir/build.make CMakeFiles/address.dir/ip_addr.cpp.s
+.PHONY : ip_addr.cpp.s
+
+ip_pkg.o: ip_pkg.cpp.o
+.PHONY : ip_pkg.o
+
+# target to build an object file
+ip_pkg.cpp.o:
+	$(MAKE) -f CMakeFiles/ip_pkg.dir/build.make CMakeFiles/ip_pkg.dir/ip_pkg.cpp.o
+.PHONY : ip_pkg.cpp.o
+
+ip_pkg.i: ip_pkg.cpp.i
+.PHONY : ip_pkg.i
+
+# target to preprocess a source file
+ip_pkg.cpp.i:
+	$(MAKE) -f CMakeFiles/ip_pkg.dir/build.make CMakeFiles/ip_pkg.dir/ip_pkg.cpp.i
+.PHONY : ip_pkg.cpp.i
+
+ip_pkg.s: ip_pkg.cpp.s
+.PHONY : ip_pkg.s
+
+# target to generate assembly for a file
+ip_pkg.cpp.s:
+	$(MAKE) -f CMakeFiles/ip_pkg.dir/build.make CMakeFiles/ip_pkg.dir/ip_pkg.cpp.s
+.PHONY : ip_pkg.cpp.s
 
 main.o: main.cpp.o
 .PHONY : main.o
@@ -243,53 +330,77 @@ msgLog.cpp.s:
 	$(MAKE) -f CMakeFiles/msgLog.dir/build.make CMakeFiles/msgLog.dir/msgLog.cpp.s
 .PHONY : msgLog.cpp.s
 
-server.o: server.cpp.o
-.PHONY : server.o
+run_lock.o: run_lock.cpp.o
+.PHONY : run_lock.o
 
 # target to build an object file
-server.cpp.o:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.cpp.o
-.PHONY : server.cpp.o
+run_lock.cpp.o:
+	$(MAKE) -f CMakeFiles/run_lock.dir/build.make CMakeFiles/run_lock.dir/run_lock.cpp.o
+.PHONY : run_lock.cpp.o
 
-server.i: server.cpp.i
-.PHONY : server.i
+run_lock.i: run_lock.cpp.i
+.PHONY : run_lock.i
 
 # target to preprocess a source file
-server.cpp.i:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.cpp.i
-.PHONY : server.cpp.i
+run_lock.cpp.i:
+	$(MAKE) -f CMakeFiles/run_lock.dir/build.make CMakeFiles/run_lock.dir/run_lock.cpp.i
+.PHONY : run_lock.cpp.i
 
-server.s: server.cpp.s
-.PHONY : server.s
+run_lock.s: run_lock.cpp.s
+.PHONY : run_lock.s
 
 # target to generate assembly for a file
-server.cpp.s:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.cpp.s
-.PHONY : server.cpp.s
+run_lock.cpp.s:
+	$(MAKE) -f CMakeFiles/run_lock.dir/build.make CMakeFiles/run_lock.dir/run_lock.cpp.s
+.PHONY : run_lock.cpp.s
 
-simpleList.o: simpleList.cpp.o
-.PHONY : simpleList.o
+udp_receiver.o: udp_receiver.cpp.o
+.PHONY : udp_receiver.o
 
 # target to build an object file
-simpleList.cpp.o:
-	$(MAKE) -f CMakeFiles/simpleList.dir/build.make CMakeFiles/simpleList.dir/simpleList.cpp.o
-.PHONY : simpleList.cpp.o
+udp_receiver.cpp.o:
+	$(MAKE) -f CMakeFiles/udp_receiver.dir/build.make CMakeFiles/udp_receiver.dir/udp_receiver.cpp.o
+.PHONY : udp_receiver.cpp.o
 
-simpleList.i: simpleList.cpp.i
-.PHONY : simpleList.i
+udp_receiver.i: udp_receiver.cpp.i
+.PHONY : udp_receiver.i
 
 # target to preprocess a source file
-simpleList.cpp.i:
-	$(MAKE) -f CMakeFiles/simpleList.dir/build.make CMakeFiles/simpleList.dir/simpleList.cpp.i
-.PHONY : simpleList.cpp.i
+udp_receiver.cpp.i:
+	$(MAKE) -f CMakeFiles/udp_receiver.dir/build.make CMakeFiles/udp_receiver.dir/udp_receiver.cpp.i
+.PHONY : udp_receiver.cpp.i
 
-simpleList.s: simpleList.cpp.s
-.PHONY : simpleList.s
+udp_receiver.s: udp_receiver.cpp.s
+.PHONY : udp_receiver.s
 
 # target to generate assembly for a file
-simpleList.cpp.s:
-	$(MAKE) -f CMakeFiles/simpleList.dir/build.make CMakeFiles/simpleList.dir/simpleList.cpp.s
-.PHONY : simpleList.cpp.s
+udp_receiver.cpp.s:
+	$(MAKE) -f CMakeFiles/udp_receiver.dir/build.make CMakeFiles/udp_receiver.dir/udp_receiver.cpp.s
+.PHONY : udp_receiver.cpp.s
+
+udp_socket.o: udp_socket.cpp.o
+.PHONY : udp_socket.o
+
+# target to build an object file
+udp_socket.cpp.o:
+	$(MAKE) -f CMakeFiles/UDPSocket.dir/build.make CMakeFiles/UDPSocket.dir/udp_socket.cpp.o
+.PHONY : udp_socket.cpp.o
+
+udp_socket.i: udp_socket.cpp.i
+.PHONY : udp_socket.i
+
+# target to preprocess a source file
+udp_socket.cpp.i:
+	$(MAKE) -f CMakeFiles/UDPSocket.dir/build.make CMakeFiles/UDPSocket.dir/udp_socket.cpp.i
+.PHONY : udp_socket.cpp.i
+
+udp_socket.s: udp_socket.cpp.s
+.PHONY : udp_socket.s
+
+# target to generate assembly for a file
+udp_socket.cpp.s:
+	$(MAKE) -f CMakeFiles/UDPSocket.dir/build.make CMakeFiles/UDPSocket.dir/udp_socket.cpp.s
+.PHONY : udp_socket.cpp.s
 
 # Help Target
 help:
@@ -297,28 +408,40 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
+	@echo "... UDPSocket"
+	@echo "... address"
 	@echo "... edit_cache"
 	@echo "... install"
 	@echo "... install/local"
 	@echo "... install/strip"
+	@echo "... ip_pkg"
 	@echo "... list_install_components"
 	@echo "... msgLog"
 	@echo "... network"
 	@echo "... rebuild_cache"
-	@echo "... server"
-	@echo "... simpleList"
+	@echo "... run_lock"
+	@echo "... udp_receiver"
+	@echo "... ip_addr.o"
+	@echo "... ip_addr.i"
+	@echo "... ip_addr.s"
+	@echo "... ip_pkg.o"
+	@echo "... ip_pkg.i"
+	@echo "... ip_pkg.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
 	@echo "... msgLog.o"
 	@echo "... msgLog.i"
 	@echo "... msgLog.s"
-	@echo "... server.o"
-	@echo "... server.i"
-	@echo "... server.s"
-	@echo "... simpleList.o"
-	@echo "... simpleList.i"
-	@echo "... simpleList.s"
+	@echo "... run_lock.o"
+	@echo "... run_lock.i"
+	@echo "... run_lock.s"
+	@echo "... udp_receiver.o"
+	@echo "... udp_receiver.i"
+	@echo "... udp_receiver.s"
+	@echo "... udp_socket.o"
+	@echo "... udp_socket.i"
+	@echo "... udp_socket.s"
 .PHONY : help
 
 
