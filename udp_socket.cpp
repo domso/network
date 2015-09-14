@@ -65,30 +65,34 @@ int network::udp_socket::setTimeout (const int sec ) const {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ssize_t network::udp_socket::send (const network::ip_addr& address, const std::vector< char >& buffer, const int msglen, const  int flags ) const {
     if ( msglen > 0 ) {
-        return sendto ( dataPTR_->skt, buffer.data(), msglen, flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
+        return sendto(dataPTR_->skt, buffer.data(), msglen, flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
     }
-    return sendto ( dataPTR_->skt, buffer.data(), buffer.size(), flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
+    return sendto(dataPTR_->skt, buffer.data(), buffer.size(), flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssize_t network::udp_socket::send(const network::ip_pkg& pkg, const int flags) const {
+    return sendto(dataPTR_->skt, pkg.getData().data(), pkg.getData().size(), flags, ( sockaddr* ) &pkg.getAddr().getSockaddr_in(), sizeof ( pkg.getAddr().getSockaddr_in() ) );
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ssize_t network::udp_socket::recv (const network::ip_addr& address, std::vector< char >& buffer, const int flags ) const {
     socklen_t address_len = sizeof ( address.getSockaddr_in() );
-    return recvfrom ( dataPTR_->skt, buffer.data(), buffer.size(), flags, ( sockaddr* ) &address.getSockaddr_in(), &address_len );
+    return recvfrom(dataPTR_->skt, buffer.data(), buffer.size(), flags, ( sockaddr* ) &address.getSockaddr_in(), &address_len );
 }
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_socket::udp_socket_data::udp_socket_data () {
-    sem_init ( &semaphore, 0, 1 );
+    sem_init (&semaphore, 0, 1 );
     valid = false;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_socket::udp_socket_data::~udp_socket_data() {
-    sem_destroy ( &semaphore );
-    if ( valid ) {
-        close ( skt );
+    sem_destroy (&semaphore );
+    if (valid) {
+        close (skt);
     }
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool network::udp_socket::udp_socket_data::init ( const uint16_t PORT ) {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     memset ( ( char* ) &local_address, 0, sizeof ( local_address ) );
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     local_address.sin_family = AF_INET;
@@ -96,8 +100,8 @@ bool network::udp_socket::udp_socket_data::init ( const uint16_t PORT ) {
     local_address.sin_addr.s_addr = htonl ( INADDR_ANY );
     port = PORT;
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if ( ( skt = socket ( AF_INET, SOCK_DGRAM, IPPROTO_UDP ) ) != -1 ) {
-        if ( bind ( skt , ( sockaddr* ) &local_address, sizeof ( local_address ) ) != -1 ) {
+    if ((skt = socket ( AF_INET, SOCK_DGRAM, IPPROTO_UDP ) ) != -1 ) {
+        if (bind (skt, ( sockaddr* ) &local_address, sizeof ( local_address ) ) != -1 ) {
             valid = true;
         }
     }

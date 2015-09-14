@@ -17,7 +17,7 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // parameters:
             // -> buffer: message data
-            // -> len: size of data
+            // -> len: create a internal buffer with size == len filled with zeros and copy min(buffer.size(), len) bytes from the original buffer (with leading zeros if len > buffer.size() )
             // -> addr: sender-address
             ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr);
             // copy constructor
@@ -32,6 +32,8 @@ namespace network {
             std::string toString() const;
             // returns the package-data
             std::vector<char>& getData() const;
+            // returns the package-address
+            ip_addr& getAddr() const;
             // returns the age in microseconds
             int getAge() const;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

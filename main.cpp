@@ -30,8 +30,8 @@ int callBack_client (const network::ip_addr& addr, std::vector<char>& buffer, co
     return -1;
 }
 
-void callback(network::ip_pkg pkg, const network::udp_socket socket) {
-    std::cout << "callback:" + pkg.toString() << std::endl;
+void callback(network::ip_pkg pkg, const network::udp_socket socket,const void* addPtr) {
+    std::cout << "callback:" + pkg.toString() << "||" << addPtr << std::endl;
 }
 
 void server() {
@@ -42,27 +42,34 @@ void server() {
 
     }
     network::udp_receiver receiver;
+    network::udp_receiver::udp_receiver_init_param parameter;
 
-    receiver.init ( sock, 1000, &callBack_server, &callback, 5, 10);
+    
+    parameter.minThread = 4;
+    parameter.maxThread = 10;
+    parameter.addPtr = (void*)1234;
+    
+    receiver.init ( sock, &callBack_server, &callback, &parameter);
 
 
     std::cin.get();
     receiver.stop();
+
 }
 
 void client() {
     network::udp_socket sock;
 
-    if ( !sock.init ( 5002 ) ) {
+    if ( !sock.init (5002) ) {
         std::cout << "error while init socket!" << std::endl;
 
     }
     network::udp_receiver receiver;
 
-    receiver.init ( sock, 1000, &callBack_client, &callback, 1, 1);
+    receiver.init (sock, &callBack_client, &callback, 0);
 
     network::ip_addr partner;
-    partner.init ( "127.0.0.1", 5000 );
+    partner.init ("127.0.0.1", 5000 );
 
     std::vector<char> buffer ( 500, '\0' );
 
@@ -73,17 +80,27 @@ void client() {
     buffer[4] = 'O';
     buffer[5] = '!';
 
-    sock.send ( partner, buffer, 6);
-// std::cin.get();
+    for (int i = 0 ; i < 1000 ; i++) {
+        buffer[0] = 65 + (i % 18);
+        buffer[1] = 66 + (i % 18);
+        buffer[2] = 67 + (i % 18);
+        buffer[3] = 68 + (i % 18);
+        buffer[4] = 69 + (i % 18);
+        buffer[5] = 70 + (i % 18);
+        sock.send ( partner, buffer);
+    }
+//std::cin.get();
     receiver.stop();
 
 }
 
 
-int main ( int argc, char** argv ) {
-//    server();
-    client();
 
+
+int main ( int argc, char** argv ) {
+    server();
+//    client();
+    
 }
 
 

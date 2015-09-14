@@ -34,6 +34,10 @@ std::vector< char >& network::ip_pkg::getData() const {
     return dataPTR_->data;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ip_addr& network::ip_pkg::getAddr() const {
+    return dataPTR_->addr;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int network::ip_pkg::getAge() const {
     std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
     int tmp = std::chrono::duration_cast<std::chrono::microseconds>(t - dataPTR_->time).count();
@@ -43,8 +47,18 @@ int network::ip_pkg::getAge() const {
 network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, const int len, const network::ip_addr& addr) {
     sem_init(&semaphore, 0, 1);
     data.resize(len, '\0');
-    for (int i = 0; i < len ; i++) {
-        data[i] = buffer[i];
+    int startIndex = len - buffer.size();
+    if (startIndex < 0) { startIndex = 0; }
+    int msgLen;
+    
+    if (len > buffer.size()){
+        msgLen = buffer.size();
+    }else{
+        msgLen = len;        
+    }
+
+    for (int i = 0; i < msgLen ; i++) {
+        data[startIndex + i] = buffer[i];
     }
     time = std::chrono::high_resolution_clock::now();
     this->addr = addr;

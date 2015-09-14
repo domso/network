@@ -2,7 +2,7 @@
 #include "assert.h"
 #include "signal.h"
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::udp_receiver::udp_receiver() {
+network::udp_receiver::udp_receiver() : dataPTR_(nullptr) {
     dataPTR_ = new udp_receiver_data();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,14 +18,14 @@ network::udp_receiver::udp_receiver(network::udp_receiver::udp_receiver_data* da
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_receiver::~udp_receiver() {
-    if (dataPTR_ != nullptr) {
-        sem_wait(& (dataPTR_->semaphore));
-        int tmp = 0;
-        sem_getvalue(& (dataPTR_->semaphore), &tmp);
-        if (tmp <= 0) {
-            delete dataPTR_;
-        }
+
+    sem_wait(& (dataPTR_->semaphore));
+    int tmp = 0;
+    sem_getvalue(& (dataPTR_->semaphore), &tmp);
+    if (tmp <= 0) {
+        delete dataPTR_;
     }
+
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::operator= (const network::udp_receiver that) {
@@ -33,9 +33,8 @@ void network::udp_receiver::operator= (const network::udp_receiver that) {
     sem_post(& (dataPTR_->semaphore));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::init(const network::udp_socket socket, const  int bufferSize, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_callbackFunction)(ip_pkg, const udp_socket), const int minThread, const int maxThread) const {
-    dataPTR_->init(socket, bufferSize, recv_callbackFunction, work_callbackFunction, minThread, maxThread);
-
+void network::udp_receiver::init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_callbackFunction)(ip_pkg, const udp_socket, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) const {
+    dataPTR_->init(socket, recv_callbackFunction, work_callbackFunction, parameters);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::stop() {
@@ -46,7 +45,7 @@ void network::udp_receiver::stop() {
     sem_destroy(& (dataPTR_->dynamicThreadNum));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::udp_receiver::udp_receiver_data::udp_receiver_data() {
+network::udp_receiver::udp_receiver_data::udp_receiver_data() : queue(5) {
     sem_init(&semaphore, 0, 1);
     sem_init(&numThread, 0, 0);
 }
@@ -56,20 +55,48 @@ network::udp_receiver::udp_receiver_data::~udp_receiver_data() {
     sem_destroy(&semaphore);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::udp_receiver_data::init(const network::udp_socket skt, const int bufferSize, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_cbFunction)(ip_pkg, const udp_socket), const int minThread, const int maxThread) {
-    assert(maxThread >= minThread);
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    buffer.resize(bufferSize, '\0');
-    sem_init(&dynamicThreadNum, 0, maxThread - minThread);
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::udp_receiver::udp_receiver_init_param::udp_receiver_init_param() {
+    bufferSize = NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE;
+    sec2wait = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT;
+    sec2close = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2CLOSE;
+    microsec2start = NETWORK_UDP_RECEIVER_INIT_PARAM_MICROSEC2START;
+    minThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD;
+    maxThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD;
+    numPriority = NETWORK_UDP_RECEIVER_INIT_PARAM_NUMPRIORITY;
+    addPtr = nullptr;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void network::udp_receiver::udp_receiver_data::init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_cbFunction)(ip_pkg, const udp_socket, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) {
     socket = skt;
     recv_callbackFunction = recv_cbFunction;
     work_callbackFunction = work_cbFunction;
-    sec2wait = 10;
-    sec2close = 100;
-    microsec2start = 1000;
-    this->minThread = minThread;
-    this->maxThread = maxThread;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if (parameters == nullptr) {
+        // default config
+        bufferSize = NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE;
+        sec2wait = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT;
+        sec2close = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2CLOSE;
+        microsec2start = NETWORK_UDP_RECEIVER_INIT_PARAM_MICROSEC2START;
+        minThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD;
+        maxThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD;
+        numPriority = NETWORK_UDP_RECEIVER_INIT_PARAM_NUMPRIORITY;
+        addPtr = nullptr;
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    } else {
+        // set config
+        bufferSize = parameters->bufferSize;
+        sec2wait = parameters->sec2wait;
+        sec2close = parameters->sec2close;
+        microsec2start = parameters->microsec2start;
+        minThread = parameters->minThread;
+        maxThread = parameters->maxThread;
+        numPriority = parameters->numPriority;
+        addPtr = parameters->addPtr;
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    buffer.resize(bufferSize, '\0');
+    sem_init(&dynamicThreadNum, 0, maxThread - minThread);
+    queue.setPriority(numPriority);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     threadState.start();
     cont_thread = std::thread(contThread, this, sec2wait);
@@ -77,13 +104,16 @@ void network::udp_receiver::udp_receiver_data::init(const network::udp_socket sk
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver::udp_receiver_data* receiver , int pollIntervall) {
     int recvBytes = 0;
+    int priority;
+    udp_receiver recv(receiver);
     receiver->socket.setTimeout(pollIntervall);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
         if ((recvBytes = receiver->socket.recv(receiver->recv_addr, receiver->buffer)) > 0) {
-            if (receiver->recv_callbackFunction == nullptr || receiver->recv_callbackFunction(receiver->recv_addr, receiver->buffer, recvBytes, receiver->socket) == 0) {
+            priority = 0;
+            if (receiver->recv_callbackFunction == nullptr || (priority = receiver->recv_callbackFunction(receiver->recv_addr, receiver->buffer, recvBytes, receiver->socket)) >= 0 ) {
                 ip_pkg pkg(receiver->buffer, recvBytes, receiver->recv_addr);
-                receiver->queue.push(pkg);
+                receiver->queue.push(pkg, priority);
             }
         }
     }
@@ -98,7 +128,7 @@ void network::udp_receiver::udp_receiver_data::workThread(network::udp_receiver:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             timeWaited = 0;
             ip_pkg pkg = receiver->queue.getData();
-            receiver->work_callbackFunction(pkg, receiver->socket);
+            receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             if (pkg.getAge() > receiver->microsec2start) {
                 if (sem_trywait(& (receiver->dynamicThreadNum)) == 0) {
@@ -121,7 +151,7 @@ void network::udp_receiver::udp_receiver_data::workThread(network::udp_receiver:
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver::udp_receiver_data* receiver , int pollIntervall) {
     udp_receiver recv(receiver);
-    std::vector<std::thread> threads(receiver->maxThread + 1);
+    std::vector<std::thread> threads(receiver->minThread + 1);
     int tID = 0;
     threads[tID] = std::thread(recvThread, receiver, pollIntervall);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,13 +165,11 @@ void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver:
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
         if (sem_timedwait(& (receiver->numThread), &ts) == 0) {
-            if (tID < receiver->maxThread + 1) {
-                threads[tID++] = std::thread(workThread, receiver, false);
-            }
+            threads.push_back(std::thread(workThread, receiver, false));
         }
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    for (int i = 0; i < tID ; i++) {
+    for (int i = 0; i < threads.size() ; i++) {
         if (threads[i].joinable()) {
             threads[i].join();
         }

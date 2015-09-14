@@ -198,10 +198,10 @@ clean: CMakeFiles/msgLog.dir/clean
 # All Build rule for target.
 CMakeFiles/network.dir/all: CMakeFiles/address.dir/all
 CMakeFiles/network.dir/all: CMakeFiles/udp_receiver.dir/all
+CMakeFiles/network.dir/all: CMakeFiles/UDPSocket.dir/all
 CMakeFiles/network.dir/all: CMakeFiles/ip_pkg.dir/all
 CMakeFiles/network.dir/all: CMakeFiles/run_lock.dir/all
 CMakeFiles/network.dir/all: CMakeFiles/msgLog.dir/all
-CMakeFiles/network.dir/all: CMakeFiles/UDPSocket.dir/all
 	$(MAKE) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/depend
 	$(MAKE) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/build
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/dominik/projects/network/build/CMakeFiles  5
