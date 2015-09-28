@@ -19,6 +19,9 @@ target_link_libraries(network ip_pkg)
 add_library(run_lock run_lock.cpp)
 target_link_libraries(network run_lock)
 
+add_library(rw_mutex rw_mutex.cpp)
+target_link_libraries(network rw_mutex)
+
 add_library(msgLog msgLog.cpp)
 target_link_libraries(network msgLog)
 

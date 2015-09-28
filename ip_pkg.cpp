@@ -27,7 +27,14 @@ void network::ip_pkg::operator= (const network::ip_pkg that) {
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 std::string network::ip_pkg::toString() const {
-    return "[Package][" + std::to_string(dataPTR_->data.size()) + " Bytes][" + dataPTR_->addr.getIP() + ":" + std::to_string(dataPTR_->addr.getPort()) + "][Age: " + std::to_string(getAge()) + "]";
+    return "[Package][" + std::to_string(dataPTR_->data.size()) + " Bytes][IPv4:" 
+    + static_cast<ipv4_addr*>(&dataPTR_->addr)->getIP() + ":" + std::to_string(static_cast<ipv4_addr*>(&dataPTR_->addr)->getPort())
+    
+    + "][IPv6:"
+    
+    + static_cast<ipv6_addr*>(&dataPTR_->addr)->getIP() + ":" + std::to_string(static_cast<ipv6_addr*>(&dataPTR_->addr)->getPort())
+    
+    +"][Age: " + std::to_string(getAge()) + "]";
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 std::vector< char >& network::ip_pkg::getData() const {

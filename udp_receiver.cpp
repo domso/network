@@ -33,7 +33,7 @@ void network::udp_receiver::operator= (const network::udp_receiver that) {
     sem_post(& (dataPTR_->semaphore));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_callbackFunction)(ip_pkg, const udp_socket, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) const {
+void network::udp_receiver::init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) const {
     dataPTR_->init(socket, recv_callbackFunction, work_callbackFunction, parameters);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +66,7 @@ network::udp_receiver::udp_receiver_init_param::udp_receiver_init_param() {
     addPtr = nullptr;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::udp_receiver_data::init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_cbFunction)(ip_pkg, const udp_socket, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) {
+void network::udp_receiver::udp_receiver_data::init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_cbFunction)(ip_pkg&, const udp_socket&, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) {
     socket = skt;
     recv_callbackFunction = recv_cbFunction;
     work_callbackFunction = work_cbFunction;

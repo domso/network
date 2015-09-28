@@ -86,6 +86,7 @@ network: libaddress.a
 network: libudp_receiver.a
 network: libip_pkg.a
 network: librun_lock.a
+network: librw_mutex.a
 network: libmsgLog.a
 network: CMakeFiles/network.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX executable network"

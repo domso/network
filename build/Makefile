@@ -222,6 +222,19 @@ run_lock/fast:
 .PHONY : run_lock/fast
 
 #=============================================================================
+# Target rules for targets named rw_mutex
+
+# Build rule for target.
+rw_mutex: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 rw_mutex
+.PHONY : rw_mutex
+
+# fast build rule for target.
+rw_mutex/fast:
+	$(MAKE) -f CMakeFiles/rw_mutex.dir/build.make CMakeFiles/rw_mutex.dir/build
+.PHONY : rw_mutex/fast
+
+#=============================================================================
 # Target rules for targets named udp_receiver
 
 # Build rule for target.
@@ -354,6 +367,30 @@ run_lock.cpp.s:
 	$(MAKE) -f CMakeFiles/run_lock.dir/build.make CMakeFiles/run_lock.dir/run_lock.cpp.s
 .PHONY : run_lock.cpp.s
 
+rw_mutex.o: rw_mutex.cpp.o
+.PHONY : rw_mutex.o
+
+# target to build an object file
+rw_mutex.cpp.o:
+	$(MAKE) -f CMakeFiles/rw_mutex.dir/build.make CMakeFiles/rw_mutex.dir/rw_mutex.cpp.o
+.PHONY : rw_mutex.cpp.o
+
+rw_mutex.i: rw_mutex.cpp.i
+.PHONY : rw_mutex.i
+
+# target to preprocess a source file
+rw_mutex.cpp.i:
+	$(MAKE) -f CMakeFiles/rw_mutex.dir/build.make CMakeFiles/rw_mutex.dir/rw_mutex.cpp.i
+.PHONY : rw_mutex.cpp.i
+
+rw_mutex.s: rw_mutex.cpp.s
+.PHONY : rw_mutex.s
+
+# target to generate assembly for a file
+rw_mutex.cpp.s:
+	$(MAKE) -f CMakeFiles/rw_mutex.dir/build.make CMakeFiles/rw_mutex.dir/rw_mutex.cpp.s
+.PHONY : rw_mutex.cpp.s
+
 udp_receiver.o: udp_receiver.cpp.o
 .PHONY : udp_receiver.o
 
@@ -420,6 +457,7 @@ help:
 	@echo "... network"
 	@echo "... rebuild_cache"
 	@echo "... run_lock"
+	@echo "... rw_mutex"
 	@echo "... udp_receiver"
 	@echo "... ip_addr.o"
 	@echo "... ip_addr.i"
@@ -436,6 +474,9 @@ help:
 	@echo "... run_lock.o"
 	@echo "... run_lock.i"
 	@echo "... run_lock.s"
+	@echo "... rw_mutex.o"
+	@echo "... rw_mutex.i"
+	@echo "... rw_mutex.s"
 	@echo "... udp_receiver.o"
 	@echo "... udp_receiver.i"
 	@echo "... udp_receiver.s"

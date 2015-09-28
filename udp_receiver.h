@@ -78,7 +78,7 @@ namespace network {
             // -> recv_callbackFunction: function which will be executed every time data arrives the recv-thread (nullptr for disable) if the function returns a negative number, the data will be ignored and deleted. if the return-value is zero, the package will be 'send' to work_callbackFunction() with highest priority. Higher return-values will reduce the priority (--> numPriority in udp_receiver::udp_receiver_init_param)
             // -> work_callbackFunction: function which will be executed with a ip_pkg arrives a working-Thread (not nullptr!) put all package-processing here
             // -> udp_receiver_init_param: optional parameters
-            void init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_callbackFunction)(ip_pkg, const udp_socket, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters) const;
+            void init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters) const;
             // stops all threads
             // -> udp_receiver_data will NOT be freed until stop() is called!
             void stop();
@@ -92,7 +92,7 @@ namespace network {
                 ~udp_receiver_data();
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // set all parameters
-                void init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket), void (*const work_cbFunction)(const ip_pkg, const udp_socket, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters);
+                void init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_cbFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // receiver-thread
                 // -> socket.recv()
@@ -134,9 +134,9 @@ namespace network {
                 // ip_addr for socket.recv()
                 ip_addr recv_addr;
                 // callback for incoming data (executed by recvThread)
-                int (*recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket);
+                int (*recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&);
                 // callback for incoming data (executed by workThread)
-                void (*work_callbackFunction)(ip_pkg, const udp_socket, const void*);
+                void (*work_callbackFunction)(ip_pkg&, const udp_socket&, const void*);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // package-queue: recvThread --> workThread
                 shared_queue<ip_pkg> queue;

@@ -12,6 +12,12 @@ iostream
 arpa/inet.h
 -
 
+/home/dominik/projects/network/ip_addr_map.h
+mutex
+/home/dominik/projects/network/mutex
+rw_mutex.h
+/home/dominik/projects/network/rw_mutex.h
+
 /home/dominik/projects/network/ip_pkg.h
 iostream
 -
@@ -47,6 +53,8 @@ ip_pkg.h
 /home/dominik/projects/network/ip_pkg.h
 shared_queue.h
 /home/dominik/projects/network/shared_queue.h
+ip_addr_map.h
+/home/dominik/projects/network/ip_addr_map.h
 
 /home/dominik/projects/network/msgLog.h
 vector
@@ -59,6 +67,10 @@ fstream
 /home/dominik/projects/network/run_lock.h
 mutex
 -
+
+/home/dominik/projects/network/rw_mutex.h
+pthread.h
+/home/dominik/projects/network/pthread.h
 
 /home/dominik/projects/network/shared_queue.h
 queue

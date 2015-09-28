@@ -189,6 +189,9 @@ network_SOURCE_DIR:STATIC=/home/dominik/projects/network
 //Dependencies for target
 run_lock_LIB_DEPENDS:STATIC=
 
+//Dependencies for target
+rw_mutex_LIB_DEPENDS:STATIC=
+
 //Dependencies for the target
 server_LIB_DEPENDS:STATIC=general;pthread;
 
