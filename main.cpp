@@ -16,7 +16,9 @@
 
 #include "shared_queue.h"
 #include "ip_addr_map.h"
+#include "rw_mutex.h"
 
+#include "rw_container.h"
 
 int callBack_server (const network::ip_addr& addr, std::vector<char>& buffer, const int recvBytes, const network::udp_socket& socket ) {
     std::string tmp ( buffer.data() );
@@ -70,7 +72,7 @@ void client() {
     receiver.init (sock, &callBack_client, &callback, 0);
 
     network::ipv4_addr partner;
-    partner.init("127.0.0.1", 5000 );
+    partner.init("91.60.124.103", 5000 );
 
     std::vector<char> buffer ( 500, '\0' );
 
@@ -97,7 +99,7 @@ void client() {
 
 int main ( int argc, char** argv ) {
 //      server();
-    client();
+     client();
 
 }
 

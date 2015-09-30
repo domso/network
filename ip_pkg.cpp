@@ -1,8 +1,12 @@
 #include "ip_pkg.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr) {
-    dataPTR_ = new ip_pkg_data(buffer, len, addr);
+network::ip_pkg::ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr, const char defaultBufferValue) {
+    dataPTR_ = new ip_pkg_data(buffer, len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ip_pkg::ip_pkg(const int len, const network::ip_addr& addr, const char defaultBufferValue) {
+    dataPTR_ = new ip_pkg_data(len, addr, defaultBufferValue);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::ip_pkg::ip_pkg(const network::ip_pkg& that) {
@@ -51,9 +55,9 @@ int network::ip_pkg::getAge() const {
     return tmp;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, const int len, const network::ip_addr& addr) {
+network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, const int len, const network::ip_addr& addr, const char defaultBufferValue) {
     sem_init(&semaphore, 0, 1);
-    data.resize(len, '\0');
+    data.resize(len, defaultBufferValue);
     int startIndex = len - buffer.size();
     if (startIndex < 0) { startIndex = 0; }
     int msgLen;
@@ -67,6 +71,14 @@ network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, con
     for (int i = 0; i < msgLen ; i++) {
         data[startIndex + i] = buffer[i];
     }
+    time = std::chrono::high_resolution_clock::now();
+    this->addr = addr;
+    this->addr.update();
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ip_pkg::ip_pkg_data::ip_pkg_data(const int len, const network::ip_addr& addr, const char defaultBufferValue) {
+    sem_init(&semaphore, 0, 1);
+    data.resize(len, defaultBufferValue);
     time = std::chrono::high_resolution_clock::now();
     this->addr = addr;
     this->addr.update();

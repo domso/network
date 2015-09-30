@@ -17,9 +17,13 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // parameters:
             // -> buffer: message data
-            // -> len: create a internal buffer with size == len filled with zeros and copy min(buffer.size(), len) bytes from the original buffer (with leading zeros if len > buffer.size() )
+            // -> len: create a internal buffer with size == len filled with defaultBufferValue and copy min(buffer.size(), len) bytes from the original buffer into the internal buffer starting with len - buffer.size()
             // -> addr: sender-address
-            ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr);
+            ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr, const char defaultBufferValue = '\0');
+            // parameters:
+            // -> len: size of package (filled with defaultBufferValue)
+            // -> addr: sender-address
+            ip_pkg(const int len, const ip_addr& addr, const char defaultBufferValue = '\0');
             // copy constructor
             ip_pkg(const ip_pkg& that);
             // default destructor
@@ -43,7 +47,8 @@ namespace network {
             struct ip_pkg_data {
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // constructor
-                ip_pkg_data(const std::vector<char>& buffer, const int len, const ip_addr& addr);
+                ip_pkg_data(const std::vector<char>& buffer, const int len, const ip_addr& addr, const char defaultBufferValue);
+                ip_pkg_data(const int len, const ip_addr& addr, const char defaultBufferValue);
                 // default destructor
                 ~ip_pkg_data();
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +59,7 @@ namespace network {
                 std::vector<char> data;
                 // creating-time of package
                 std::chrono::high_resolution_clock::time_point time;
-                // sender address
+                // address
                 ip_addr addr;
             };
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
