@@ -98,8 +98,8 @@ void client() {
 }
 
 int main ( int argc, char** argv ) {
-//      server();
-     client();
+     server();
+//     client();
 
 }
 
