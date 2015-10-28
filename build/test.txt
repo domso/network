@@ -1,6 +1,0 @@
-[WARNING] nothing happend
-[ERROR] bad things happend
-1 + 1 = 2; in case u forgot
-[WARNING] nothing happend
-[ERROR] bad things happend
-1 + 1 = 2; in case u forgot

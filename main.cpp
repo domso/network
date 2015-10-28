@@ -15,7 +15,6 @@
 #include "ip_pkg.h"
 
 #include "shared_queue.h"
-#include "ip_addr_map.h"
 #include "rw_mutex.h"
 
 #include "rw_container.h"
@@ -32,9 +31,9 @@ int callBack_client (const network::ip_addr& addr, std::vector<char>& buffer, co
     std::cout << "Data: '" << tmp << "' (" << recvBytes << " Bytes) from " << inet_ntoa ( addr.getSockaddr_in().sin_addr ) << ":" << ntohs ( addr.getSockaddr_in().sin_port ) << std::endl;
     return -1;
 }
-
+int t = 0;
 void callback(network::ip_pkg& pkg, const network::udp_socket& socket, const void* addPtr) {
-    std::cout << "callback:" + pkg.toString() << "||" << addPtr << std::endl;
+   std::cout << "callback:" + pkg.toString() << "||" << addPtr << std::endl;
 }
 
 void server() {
@@ -48,11 +47,11 @@ void server() {
     network::udp_receiver::udp_receiver_init_param parameter;
 
 
-    parameter.minThread = 4;
-    parameter.maxThread = 10;
+    parameter.minThread = 1;
+    parameter.maxThread = 1;
     parameter.addPtr = (void*)1234;
-
-    receiver.init ( sock, &callBack_server, &callback, &parameter);
+// callBack_server
+    receiver.init ( sock, nullptr, &callback, &parameter);
 
 
     std::cin.get();
@@ -100,7 +99,7 @@ void client() {
 int main ( int argc, char** argv ) {
      server();
 //     client();
-
+std::cout << t << std::endl;
 }
 
 

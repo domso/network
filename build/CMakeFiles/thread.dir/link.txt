@@ -1,2 +1,0 @@
-/usr/bin/ar cr libthread.a  CMakeFiles/thread.dir/thread.cpp.o
-/usr/bin/ranlib libthread.a

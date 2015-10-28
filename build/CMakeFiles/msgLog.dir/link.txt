@@ -1,2 +1,0 @@
-/usr/bin/ar cr libmsgLog.a  CMakeFiles/msgLog.dir/msgLog.cpp.o
-/usr/bin/ranlib libmsgLog.a

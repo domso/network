@@ -1,2 +1,0 @@
-/usr/bin/ar cr libsimpleList.a  CMakeFiles/simpleList.dir/simpleList.cpp.o
-/usr/bin/ranlib libsimpleList.a

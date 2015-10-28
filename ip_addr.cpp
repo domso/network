@@ -41,7 +41,7 @@ bool network::ipv4_addr::init(const std::string IP, const uint16_t PORT) {
     network_addr_v4_.sin_port = htons(PORT);
     network_addr_v4_.sin_addr.s_addr = htonl(INADDR_ANY);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (IP != "" && inet_pton(AF_INET, IP.c_str() , &network_addr_v6_.sin6_addr) == 1) {
+    if (IP != "" && inet_pton(AF_INET, IP.c_str() , &network_addr_v4_.sin_addr) == 1) {
         valid_v4_ = true;
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
