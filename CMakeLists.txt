@@ -1,31 +1,17 @@
 cmake_minimum_required(VERSION 2.6)
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 project(network)
 
-add_executable(network main.cpp)
-
-
-add_library(UDPSocket udp_socket.cpp)
-target_link_libraries(network UDPSocket)
-
-add_library(address ip_addr.cpp)
-target_link_libraries(network address)
-
-add_library(udp_receiver udp_receiver.cpp)
-target_link_libraries(network udp_receiver)
-
-add_library(ip_pkg ip_pkg.cpp)
-target_link_libraries(network ip_pkg)
-
-add_library(run_lock run_lock.cpp)
-target_link_libraries(network run_lock)
-
-add_library(rw_mutex rw_mutex.cpp)
-target_link_libraries(network rw_mutex)
-
-
-
-target_link_libraries(network pthread)
-
+add_library(network SHARED 
+	src/ip_addr.cpp
+	src/ip_pkg.cpp
+	src/run_lock.cpp
+	src/rw_mutex.cpp
+	src/udp_receiver.cpp
+	src/udp_socket.cpp
+)
+target_include_directories (network PUBLIC ${CMAKE_CURRRENT_SOURCE_DIR})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11")
-install(TARGETS network RUNTIME DESTINATION bin)
