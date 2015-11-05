@@ -160,10 +160,10 @@ void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver:
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     timespec ts;
-    assert(clock_gettime(CLOCK_REALTIME, &ts) != -1);
-    ts.tv_sec += pollIntervall;
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += pollIntervall;
         if (sem_timedwait(& (receiver->numThread), &ts) == 0) {
             threads.push_back(std::thread(workThread, receiver, false));
         }

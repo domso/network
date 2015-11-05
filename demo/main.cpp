@@ -46,8 +46,8 @@ void server() {
     network::udp_receiver::udp_receiver_init_param parameter;
 
 
-    parameter.minThread = 1;
-    parameter.maxThread = 1;
+    parameter.minThread = 4;
+    parameter.maxThread = 4;
     parameter.addPtr = (void*)1234;
 // callBack_server
     receiver.init ( sock, nullptr, &callback, &parameter);
