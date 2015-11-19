@@ -33,7 +33,7 @@ void network::udp_receiver::operator= (const network::udp_receiver that) {
     sem_post(& (dataPTR_->semaphore));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) const {
+void network::udp_receiver::init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr), const udp_receiver::udp_receiver_init_param* const parameters) const {  
     dataPTR_->init(socket, recv_callbackFunction, work_callbackFunction, parameters);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +168,7 @@ void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver:
             threads.push_back(std::thread(workThread, receiver, false));
         }
     }
+    std::cout <<  "---" << std::endl;
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     for (int i = 0; i < threads.size() ; i++) {
         if (threads[i].joinable()) {

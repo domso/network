@@ -4,7 +4,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 project(network)
 
-add_library(network SHARED 
+add_library(network  
 	src/ip_addr.cpp
 	src/ip_pkg.cpp
 	src/run_lock.cpp
@@ -12,6 +12,7 @@ add_library(network SHARED
 	src/udp_receiver.cpp
 	src/udp_socket.cpp
 )
+
 target_include_directories (network PUBLIC ${CMAKE_CURRRENT_SOURCE_DIR})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11")

@@ -45,7 +45,7 @@ void server() {
     network::udp_receiver receiver;
     network::udp_receiver::udp_receiver_init_param parameter;
 
-
+    parameter.sec2wait = 1;
     parameter.minThread = 4;
     parameter.maxThread = 4;
     parameter.addPtr = (void*)1234;
@@ -98,7 +98,6 @@ void client() {
 int main ( int argc, char** argv ) {
      server();
 //     client();
-std::cout << t << std::endl;
 }
 
 
