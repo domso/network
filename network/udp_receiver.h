@@ -15,11 +15,8 @@
 
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE 1000
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT 1
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2CLOSE 10
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_MICROSEC2START 1000
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD 2
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD 2
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_NUMPRIORITY 1
 
 
 
@@ -42,12 +39,9 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // additional parameters for init()  
                 //int bufferSize; // size of the recv-buffer   
-                //int sec2wait; // timeout for blocking calls               
-                //int sec2close; // wait-time for dynamic thread to close              
-                //int microsec2start; // time a package needs to spend in the queue for starting a new dynamic thread               
+                //int sec2wait; // timeout for blocking calls                          
                 //int maxThread; // maximum number of workThread-instances(=threads)               
-                //int minThread; // minimum number of workThread-instances(=threads)             
-                //int numPriority; // number of package-queue priorities
+                //int minThread; // minimum number of workThread-instances(=threads)     
                 //void* addPtr // additional pointer, which will be passed to work_callbackFunction (default nullptr)
 
 
@@ -59,26 +53,19 @@ namespace network {
                 int bufferSize;
                 // timeout for blocking calls
                 int sec2wait;
-                // wait-time for dynamic thread to close
-                int sec2close;
-                // time a package needs to spend in the queue for starting a new dynamic thread
-                int microsec2start;
                 // maximum number of workThread-instances(=threads)
                 int maxThread;
                 // minimum number of workThread-instances(=threads)
                 int minThread;
-                // number of package-queue priorities
-                int numPriority;
                 // additional pointer, which will be passed to work_callbackFunction
                 void* addPtr;
 
             };
             // parameters:
             // -> socket: the udp_socket for receiving
-            // -> recv_callbackFunction: function which will be executed every time data arrives the recv-thread (nullptr for disable) if the function returns a negative number, the data will be ignored and deleted. if the return-value is zero, the package will be 'send' to work_callbackFunction() with highest priority. Higher return-values will reduce the priority (--> numPriority in udp_receiver::udp_receiver_init_param)
-            // -> work_callbackFunction: function which will be executed with a ip_pkg arrives a working-Thread (not nullptr!) put all package-processing here
+            // -> work_callbackFunction: function which will be executed with incoming packages
             // -> udp_receiver_init_param: optional parameters
-            void init(const network::udp_socket socket, int (*const recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters) const;
+            void init(const network::udp_socket socket, void (*const work_callbackFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters) const;
             // stops all threads
             // -> udp_receiver_data will NOT be freed until stop() is called!
             void stop();
@@ -92,35 +79,16 @@ namespace network {
                 ~udp_receiver_data();
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // set all parameters
-                void init(const network::udp_socket skt, int (*const recv_cbFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&), void (*const work_cbFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters);
+                void init(const network::udp_socket skt, void (*const work_cbFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // receiver-thread
-                // -> socket.recv()
-                // -> if recv_callbackFunction() is not set or returns 0 create ip_pkg
-                // -> store ip_pkg in queue
-                // -> holds an udp_receiver-obj; --> udp_receiver_data guaranteed exist
-                static void recvThread(network::udp_receiver::udp_receiver_data* receiver, int pollIntervall);
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // worker-thread:
-                // -> pops package from queue
-                // -> executes work_callbackFunction() for every package
-                // -> notifies contThread to start a workThread-instance (dynamic-thread)
-                // -> close if dynamic and wait-time reached (sec2close)
-                // -> holds an udp_receiver-obj; --> udp_receiver_data guaranteed exist
-                static void workThread(network::udp_receiver::udp_receiver_data* receiver, bool isMainThread);
+                static void recvThread(network::udp_receiver::udp_receiver_data* receiver);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // controller-thread:
-                // -> starts all initial-threads (minThread)
-                // -> starts new dynamic-threads (maxThread - minThread)
-                // -> waits until all threads are closed (join)
-                // -> holds an udp_receiver-obj; --> udp_receiver_data guaranteed exist
                 static void contThread(network::udp_receiver::udp_receiver_data* receiver, int pollIntervall);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // semaphore for smartPointer
                 sem_t semaphore;
-                // semaphores for dynamic thread pool
-                sem_t dynamicThreadNum;
-                sem_t numThread;
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // threadpool-state (running|stop)
                 run_lock threadState;
@@ -133,8 +101,6 @@ namespace network {
                 std::vector<char> buffer;
                 // ip_addr for socket.recv()
                 ip_addr recv_addr;
-                // callback for incoming data (executed by recvThread)
-                int (*recv_callbackFunction)(const ip_addr&, std::vector<char>&, const int, const udp_socket&);
                 // callback for incoming data (executed by workThread)
                 void (*work_callbackFunction)(ip_pkg&, const udp_socket&, const void*);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -145,10 +111,6 @@ namespace network {
                 int bufferSize;
                 // timeout for blocking calls
                 int sec2wait;
-                // wait-time for dynamic thread to close
-                int sec2close;
-                // time a package needs to spend in the queue for starting a new dynamic thread
-                int microsec2start;
                 // maximum number of workThread-instances(=threads)
                 int maxThread;
                 // minimum number of workThread-instances(=threads)
@@ -173,3 +135,4 @@ namespace network {
 
 
 #endif
+

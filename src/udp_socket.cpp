@@ -61,7 +61,7 @@ int network::udp_socket::setTimeout (const int sec ) const {
     struct timeval tv;
     tv.tv_sec = sec;
     tv.tv_usec = 0;
-    setsockopt(dataPTR_->skt, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+    setsockopt(dataPTR_->skt, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ssize_t network::udp_socket::send (const network::ip_addr& address, const std::vector< char >& buffer, const int msglen, const  int flags ) const {
@@ -153,5 +153,6 @@ bool network::udp_socket::udp_socket_data::init ( const uint16_t PORT, const int
     return valid;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 
