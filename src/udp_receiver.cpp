@@ -122,6 +122,18 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
 void network::udp_receiver::udp_receiver_data::workThread(network::udp_receiver::udp_receiver_data* receiver, bool isMainThread) {
     udp_receiver recv(receiver);
     int timeWaited = 0;
+    int recvBytes = 0;
+    network::ipv4_addr addr;
+
+    ip_pkg pkg(500, (network::ip_addr&) addr);
+
+    while (receiver->threadState.isRunning()) {
+        if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData()) > 0)) {
+            receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
+	}
+    }
+	/*
+
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
         if (receiver->queue.waitForData(receiver->sec2wait)) {
@@ -146,6 +158,7 @@ void network::udp_receiver::udp_receiver_data::workThread(network::udp_receiver:
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
+*/
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,7 +166,7 @@ void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver:
     udp_receiver recv(receiver);
     std::vector<std::thread> threads(receiver->minThread + 1);
     int tID = 0;
-    threads[tID] = std::thread(recvThread, receiver, pollIntervall);
+    //threads[tID] = std::thread(recvThread, receiver, pollIntervall);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     for (tID = 1 ; tID < receiver->minThread + 1 ; tID++) {
         threads[tID] = std::thread(workThread, receiver, true);
