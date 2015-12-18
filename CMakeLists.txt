@@ -21,4 +21,9 @@ add_library(network_static STATIC
 	src/udp_receiver.cpp
 	src/udp_socket.cpp
 )
+
+
+add_executable(network_test demo/test.cpp)
+target_link_libraries(network_test network_static pthread)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11")

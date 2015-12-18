@@ -83,6 +83,25 @@ ssize_t network::udp_socket::send (const network::ip_addr& address, const std::v
     }
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssize_t network::udp_socket::send(const network::ip_addr& address, const std::string& buffer, const int msglen, const int flags) const {
+    switch (dataPTR_->sin_family) {
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        case AF_INET:
+            if ( msglen > 0 ) {
+                return sendto(dataPTR_->skt, &buffer[0], msglen, flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
+            }
+            return sendto(dataPTR_->skt, &buffer[0], buffer.length(), flags, ( sockaddr* ) &address.getSockaddr_in(), sizeof ( address.getSockaddr_in() ) );
+            break;
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        case AF_INET6:
+            if ( msglen > 0 ) {
+                return sendto(dataPTR_->skt, &buffer[0], msglen, flags, ( sockaddr* ) &address.getSockaddr_in6(), sizeof ( address.getSockaddr_in6() ) );
+            }
+            return sendto(dataPTR_->skt, &buffer[0], buffer.length(), flags, ( sockaddr* ) &address.getSockaddr_in6(), sizeof ( address.getSockaddr_in6() ) );
+            break;
+    }
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ssize_t network::udp_socket::send(const network::ip_pkg& pkg, const int flags) const {
     switch (dataPTR_->sin_family) {
         case AF_INET:

@@ -1,61 +1,77 @@
 #include <iostream>
+#include <set>
 
-#include <vector>
-#include "unistd.h"
-
-
-#include <chrono>
-
-#include "semaphore.h"
-
-#include "network/ip_addr.h"
-#include "network/udp_socket.h"
 #include "network/udp_receiver.h"
-#include "network/ip_pkg.h"
-
-#include "network/shared_queue.h"
 #include "network/rw_mutex.h"
-
 #include "network/rw_container.h"
 
-int callBack_server (const network::ip_addr& addr, std::vector<char>& buffer, const int recvBytes, const network::udp_socket& socket ) {
-    std::string tmp ( buffer.data() );
-    std::cout << "Data: '" << tmp << "' (" << recvBytes << " Bytes) from " << inet_ntoa ( addr.getSockaddr_in().sin_addr ) << ":" << ntohs ( addr.getSockaddr_in().sin_port ) << std::endl;
-
-    socket.send ( addr, buffer, recvBytes );
-    return 0;
-}
-
+rw_container<std::set<std::string>>* rw_callback_set;
 void callback(network::ip_pkg& pkg, const network::udp_socket& socket, const void* addPtr) {
-   //std::cout << "callback:" + pkg.toString() << "||" << addPtr << std::endl;
-	socket.send(pkg, 0);
+    bool CON2GET = false;
+    if (pkg.compare("CON")) {
+        network::ipv4_addr& ipv4 = (static_cast<network::ipv4_addr&>(pkg.getAddr()));
+        std::string spkg = ipv4.getIP() + ":" + std::to_string(ipv4.getPort());
+        rw_callback_set->write().lock();
+        rw_callback_set->data().insert(spkg);
+        rw_callback_set->write().unlock();
+        CON2GET = true;
+        socket.send(pkg.getAddr(), "CON-OK");
+    }
+    if (pkg.compare("GET") || CON2GET) {
+        std::string output;
+        rw_callback_set->read().lock();
+        socket.send(pkg.getAddr(), "GET-START:" + std::to_string(rw_callback_set->data().size()) + "|");
+        for (std::string s : rw_callback_set->data()) {
+            output += s + "|";
+            if (output.length() > 1000) {
+                socket.send(pkg.getAddr(), output);
+                output = "";
+            }
+        }
+
+        rw_callback_set->read().unlock();
+        if (output != "") {
+            socket.send(pkg.getAddr(), output);
+        }
+        return;
+    }
+    if (pkg.compare("FIN")) {
+        bool ok = false;
+        network::ipv4_addr& ipv4 = (static_cast<network::ipv4_addr&>(pkg.getAddr()));
+        std::string spkg = ipv4.getIP() + ":" + std::to_string(ipv4.getPort());
+        rw_callback_set->write().lock();
+        if (rw_callback_set->data().erase(spkg) > 0) {
+            ok = true;
+        }
+        rw_callback_set->write().unlock();
+        if (ok) {
+            socket.send(pkg.getAddr(), "FIN-OK");
+        } else {
+            socket.send(pkg.getAddr(), "FIN-FAIL");
+        }
+    }
 }
 
 void server() {
     network::udp_socket sock;
+    network::udp_receiver receiver;
+    rw_container<std::set<std::string>> rw_set;
+    rw_callback_set = &rw_set;
 
     if (!sock.init(5000, AF_INET)) {
         std::cout << "error while init socket!" << std::endl;
-
     }
-    network::udp_receiver receiver;
-    network::udp_receiver::udp_receiver_init_param parameter;
+    receiver.init(sock, &callback, nullptr);
 
-    parameter.sec2wait = 1;
-    parameter.minThread = 4;
-    parameter.maxThread = 4;
-    parameter.addPtr = (void*)1234;
-// callBack_server
-    receiver.init ( sock, nullptr, &callback, &parameter);
+
 
 
     std::cin.get();
-	
     receiver.stop();
 }
 
-int main ( int argc, char** argv ) {
-     server();
+int main(int argc, char** argv) {
+    server();
 }
 
 

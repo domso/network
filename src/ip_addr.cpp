@@ -25,6 +25,7 @@ const sockaddr_in6& network::ip_addr::getSockaddr_in6() const {
 void network::ip_addr::update() {
    char buffer_v4[INET_ADDRSTRLEN];
    char buffer_v6[INET6_ADDRSTRLEN];
+   
    inet_ntop(AF_INET, &network_addr_v4_.sin_addr, buffer_v4, INET_ADDRSTRLEN);
    inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
    std::string tmp_v4(buffer_v4);

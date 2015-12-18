@@ -38,8 +38,9 @@ namespace network {
             std::vector<char>& getData() const;
             // returns the package-address
             ip_addr& getAddr() const;
-            // returns the age in microseconds
-            int getAge() const;
+            // compares pkg-data in range [startIndex, startIndex+count] with given string
+            // if count = -1 compare the complete string
+            bool compare(std::string in, int startIndex = 0, int count = -1);
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         private:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,8 +58,6 @@ namespace network {
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // package-data
                 std::vector<char> data;
-                // creating-time of package
-                std::chrono::high_resolution_clock::time_point time;
                 // address
                 ip_addr addr;
             };

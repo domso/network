@@ -50,6 +50,12 @@ namespace network {
             // flags -> see 'man sendto()'
             // returns size of successfully send data
             ssize_t send(const network::ip_addr& address, const std::vector< char >& buffer, const int msglen = -1, const int flags = 0 ) const;
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // sends msglen bytes from buffer to address (msglen > 0)
+            // sends buffer.length() bytes from buffer to address (msglen <= 0)
+            // flags -> see 'man sendto()'
+            // returns size of successfully send data
+            ssize_t send(const network::ip_addr& address, const std::string& buffer, const int msglen = -1, const int flags = 0 ) const;
             // sends pkg
             // flags -> see 'man sendto()'
             // returns size of successfully send data

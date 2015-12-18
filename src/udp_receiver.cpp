@@ -1,6 +1,7 @@
 #include "network/udp_receiver.h"
 #include "assert.h"
 #include "signal.h"
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_receiver::udp_receiver() : dataPTR_(nullptr) {
     dataPTR_ = new udp_receiver_data();
@@ -101,6 +102,7 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
         if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData())) > 0) {
+            pkg.getAddr().update();
             receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
         }
     }
