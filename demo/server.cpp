@@ -18,14 +18,14 @@ void callback(network::ip_pkg& pkg, const network::udp_socket& socket, const voi
         socket.send(pkg.getAddr(), "CON-OK");
     }
     if (pkg.compare("GET") || CON2GET) {
-        std::string output;
+        std::string output = "ADDR:";
         rw_callback_set->read().lock();
         socket.send(pkg.getAddr(), "GET-START:" + std::to_string(rw_callback_set->data().size()) + "|");
         for (std::string s : rw_callback_set->data()) {
             output += s + "|";
             if (output.length() > 1000) {
                 socket.send(pkg.getAddr(), output);
-                output = "";
+                output = "ADDR:";
             }
         }
 
