@@ -102,6 +102,7 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
         if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData())) > 0) {
+            pkg.setLength(recvBytes);
             pkg.getAddr().update();
             receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
         }

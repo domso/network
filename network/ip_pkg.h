@@ -38,6 +38,12 @@ namespace network {
             std::vector<char>& getData() const;
             // returns the package-address
             ip_addr& getAddr() const;
+            // returns the package-length
+            size_t length() const;
+            // sets the package-length
+            // if length > buffer.length then return false
+            // otherwise return true
+            bool setLength(size_t length);
             // compares pkg-data in range [startIndex, startIndex+count] with given string
             // if count = -1 compare the complete string
             bool compare(std::string in, int startIndex = 0, int count = -1);
@@ -60,6 +66,8 @@ namespace network {
                 std::vector<char> data;
                 // address
                 ip_addr addr;
+                // real length of data
+                size_t length_;
             };
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // ptr to internal data
