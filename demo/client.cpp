@@ -45,28 +45,22 @@ void callback(network::ip_pkg& pkg, const network::udp_socket& socket, const voi
 
 void client() {
     network::udp_socket sock;
-   // network::udp_receiver receiver;
+    network::udp_receiver receiver;
 
     if (!sock.init(5002, AF_INET)) {
         std::cout << "error while init socket!" << std::endl;
 
     }
 
-    //receiver.init(sock, callback, nullptr);
+    receiver.init(sock, callback, nullptr);
 
     network::ipv4_addr partner;
-    //network::ipv4_addr recv_addr;
-    partner.init("91.60.120.163", 5000);
-    std::vector<char> buffer(65000,'\0');
-	int it = 100000;
-    while(it > 0) {
-	    sock.send(partner, buffer);
-		it--;
-	}
-//    std::cin.get();
+    partner.init("85.25.192.29", 5000);
+    sock.send(partner, "CON");	    
+    std::cin.get();
 
-  //  sock.send(partner, "FIN");
-    //receiver.stop();
+    sock.send(partner, "FIN");
+    receiver.stop();
 }
 
 int main(int argc, char** argv) {
