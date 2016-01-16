@@ -6,7 +6,7 @@
 #include "network/ip_addr.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_addr::ip_addr() : valid_v4_(false), valid_v6_(false) {
+network::ip_addr::ip_addr() {
 
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -14,24 +14,25 @@ network::ip_addr::~ip_addr() {
 
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-const sockaddr_in& network::ip_addr::getSockaddr_in() const {
+const sockaddr_in& network::ipv4_addr::getSockaddr_in() const {
     return network_addr_v4_;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-const sockaddr_in6& network::ip_addr::getSockaddr_in6() const {
+const sockaddr_in6& network::ipv6_addr::getSockaddr_in6() const {
     return network_addr_v6_;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::ip_addr::update() {
+void network::ipv4_addr::update() {
    char buffer_v4[INET_ADDRSTRLEN];
-   char buffer_v6[INET6_ADDRSTRLEN];
-   
    inet_ntop(AF_INET, &network_addr_v4_.sin_addr, buffer_v4, INET_ADDRSTRLEN);
-   inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
    std::string tmp_v4(buffer_v4);
-   std::string tmp_v6(buffer_v6);
-   
    IP_v4_ = tmp_v4;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void network::ipv6_addr::update() {
+   char buffer_v6[INET6_ADDRSTRLEN];
+   inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
+   std::string tmp_v6(buffer_v6);
    IP_v6_ = tmp_v6;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,7 @@
 
 #include "network/rw_mutex.h"
+#include "network/udp_receiver.h"
+#include "network/smart_ptr.h"
 #include <mutex>
 #include <iostream>
 #include <chrono>
@@ -72,10 +74,40 @@ void write_func2(std::mutex& write, pthread_barrier_t* barrier) {
     pthread_barrier_wait(barrier);
 }
 
+int foo(network::ipv4_pkg t) {
+    std::cout << "foo" << std::endl;
+    return 0;
+}
+
+class A : public smart_ptr {
+
+public:
+    A() {
+        setNewData(new data());
+    }
+private:
+
+    struct data : smart_ptr_data {
+        int a;
+
+
+    };
+
+public:
+    data* operator->() {
+        return (data*)getData();
+    }
+
+};
+
 
 int main() {
+
+    A a;
+    a->a = 10;
+    std::cout << a->a << std::endl;
     
-    
+    return 0;
     rw_mutex rwmutex;
     rw_mutex::read read(rwmutex);
     rw_mutex::write write(rwmutex);
@@ -90,7 +122,7 @@ int main() {
     int summe1 = 0;
     int summe2 = 0;
     int num_it = 100;
-    
+
     for (int it = 0; it < num_it; it++) {
         std::chrono::high_resolution_clock::time_point t1;
         std::chrono::high_resolution_clock::time_point t2;
@@ -143,13 +175,13 @@ int main() {
 
 
 //         std::cout << duration2 << std::endl;
-       
+
 
         summe1 += duration;
         summe2 += duration2;
     }
-    double result = (double) (summe2 - summe1) / (double) num_it;
-    double result2 = ( (double) summe2 / (double) summe1 ) * 100;
+    double result = (double)(summe2 - summe1) / (double) num_it;
+    double result2 = ((double) summe2 / (double) summe1) * 100;
     std::cout << "+: " << result2 << "%" << std::endl;
 
 }

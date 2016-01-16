@@ -1,12 +1,23 @@
 #include "network/ip_pkg.h"
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg(const std::vector<char>& buffer, const int len, const ip_addr& addr, const char defaultBufferValue) {
-    dataPTR_ = new ip_pkg_data(buffer, len, addr, defaultBufferValue);
+network::ip_pkg::ip_pkg() {
+
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg(const int len, const network::ip_addr& addr, const char defaultBufferValue) {
-    dataPTR_ = new ip_pkg_data(len, addr, defaultBufferValue);
+network::ipv4_pkg::ipv4_pkg(const std::vector<char>& buffer, const int len, const ipv4_addr* addr, const char defaultBufferValue) {
+    dataPTR_ = new ipv4_pkg_data(buffer, len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv4_pkg::ipv4_pkg(const int len, const network::ipv4_addr* addr, const char defaultBufferValue) {
+    dataPTR_ = new ipv4_pkg_data(len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv6_pkg::ipv6_pkg(const std::vector<char>& buffer, const int len, const ipv6_addr* addr, const char defaultBufferValue) {
+    dataPTR_ = new ipv6_pkg_data(buffer, len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv6_pkg::ipv6_pkg(const int len, const network::ipv6_addr* addr, const char defaultBufferValue) {
+    dataPTR_ = new ipv6_pkg_data(len, addr, defaultBufferValue);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::ip_pkg::ip_pkg(const network::ip_pkg& that) {
@@ -26,19 +37,22 @@ network::ip_pkg::~ip_pkg() {
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::ip_pkg::operator= (const network::ip_pkg that) {
+        if (dataPTR_ != nullptr) {
+        sem_wait(& (dataPTR_->semaphore));
+        int tmp = 0;
+        sem_getvalue(& (dataPTR_->semaphore), &tmp);
+        if (tmp <= 0) {
+            std::cout << "destructor" << std::endl;
+            delete dataPTR_;
+        }
+    }
+    std::cout << "operator =" << std::endl;
     dataPTR_ = that.dataPTR_;
     sem_post(& (dataPTR_->semaphore));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 std::string network::ip_pkg::toString() const {
-    return "[Package][" + std::to_string(dataPTR_->data.size()) + " Bytes][IPv4:"
-           + static_cast<ipv4_addr*>(&dataPTR_->addr)->getIP() + ":" + std::to_string(static_cast<ipv4_addr*>(&dataPTR_->addr)->getPort())
-
-           + "][IPv6:"
-
-           + static_cast<ipv6_addr*>(&dataPTR_->addr)->getIP() + ":" + std::to_string(static_cast<ipv6_addr*>(&dataPTR_->addr)->getPort())
-
-           + "]";
+    return "[Package][" + std::to_string(dataPTR_->data.size()) + " Bytes]";
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 std::vector< char >& network::ip_pkg::getData() const {
@@ -46,7 +60,7 @@ std::vector< char >& network::ip_pkg::getData() const {
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::ip_addr& network::ip_pkg::getAddr() const {
-    return dataPTR_->addr;
+    return dataPTR_->getAddr();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 size_t network::ip_pkg::length() const {
@@ -64,7 +78,7 @@ bool network::ip_pkg::setLength(size_t length) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool network::ip_pkg::compare(std::string in, int startIndex, int count) {
     if (count == -1) {
-        count = in.length();              
+        count = in.length();
     }
     for (int i = startIndex; i < startIndex + count; i++) {
         if (dataPTR_->data[i] != in[i]) {
@@ -74,7 +88,7 @@ bool network::ip_pkg::compare(std::string in, int startIndex, int count) {
     return true;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, const int len, const network::ip_addr& addr, const char defaultBufferValue) {
+void network::ip_pkg::ip_pkg_data::init(const std::vector< char >& buffer, const int len, const network::ip_addr* addr, const char defaultBufferValue) {
     sem_init(&semaphore, 0, 1);
     data.resize(len, defaultBufferValue);
     int startIndex = len - buffer.size();
@@ -92,18 +106,50 @@ network::ip_pkg::ip_pkg_data::ip_pkg_data(const std::vector< char >& buffer, con
     for (int i = 0; i < msgLen ; i++) {
         data[startIndex + i] = buffer[i];
     }
-    this->addr = addr;
-    this->addr.update();
+    if (addr != nullptr) {
+            setAddr(addr);
+    }
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::ip_pkg::ip_pkg_data::ip_pkg_data(const int len, const network::ip_addr& addr, const char defaultBufferValue) {
+void network::ip_pkg::ip_pkg_data::init(const int len, const network::ip_addr* addr, const char defaultBufferValue) {
     sem_init(&semaphore, 0, 1);
     data.resize(len, defaultBufferValue);
-    this->addr = addr;
-    this->addr.update();
+    if (addr != nullptr) {
+            setAddr(addr);
+    }
+    
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv4_pkg::ipv4_pkg_data::ipv4_pkg_data(const std::vector< char >& buffer, const int len, const network::ipv4_addr* addr, const char defaultBufferValue) {
+    init(buffer, len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv4_pkg::ipv4_pkg_data::ipv4_pkg_data(const int len, const network::ipv4_addr* addr, const char defaultBufferValue) {
+    init(len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv6_pkg::ipv6_pkg_data::ipv6_pkg_data(const std::vector< char >& buffer, const int len, const network::ipv6_addr* addr, const char defaultBufferValue) {
+    init(buffer, len, addr, defaultBufferValue);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+network::ipv6_pkg::ipv6_pkg_data::ipv6_pkg_data(const int len, const network::ipv6_addr* addr, const char defaultBufferValue) {
+    init(len, addr, defaultBufferValue);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::ip_pkg::ip_pkg_data::~ip_pkg_data() {
     sem_destroy(&semaphore);
 }
+network::ip_addr& network::ipv4_pkg::ipv4_pkg_data::getAddr() {
+    return addr;
+}
+void network::ipv4_pkg::ipv4_pkg_data::setAddr(const ip_addr* addr) {
+    this->addr = *static_cast<const ipv4_addr*>(addr);
+}
+network::ip_addr& network::ipv6_pkg::ipv6_pkg_data::getAddr() {
+    return addr;
+}
+void network::ipv6_pkg::ipv6_pkg_data::setAddr(const network::ip_addr* addr) {
+    this->addr = *static_cast<const ipv6_addr*>(addr);
+}
+
 

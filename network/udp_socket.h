@@ -44,6 +44,8 @@ namespace network {
             uint16_t getPort() const;
             // sets timeout for blocking calls (recv,send)
             int setTimeout(const int sec) const;
+            // returns the sin_family
+            int getFamily() const;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // sends msglen bytes from buffer to address (msglen > 0)
             // sends buffer.size() bytes from buffer to address (msglen <= 0)
@@ -84,9 +86,7 @@ namespace network {
                 // udp-socket handle
                 int skt;
                 // udp-socket port
-                uint16_t port;
-                // udp-socket address
-                ip_addr local_address;                
+                uint16_t port;              
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // is the socket ready
                 bool valid;
