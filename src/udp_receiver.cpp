@@ -102,22 +102,23 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
     int priority;
     udp_receiver recv(receiver);
 
-    ip_pkg* pkg;
+    ip_pkg pkg;
+
+    
 
     if (receiver->socket.getFamily() == AF_INET) {
         ipv4_pkg pkg_v4(receiver->bufferSize, nullptr);
-        pkg = &pkg_v4;
+        pkg = pkg_v4;
     } else {
         ipv6_pkg pkg_v6(receiver->bufferSize, nullptr);
-        pkg = &pkg_v6;
+        pkg = pkg_v6;
     }
-
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (receiver->threadState.isRunning()) {
-        if ((recvBytes = receiver->socket.recv(pkg->getAddr(), pkg->getData())) > 0) {
-            pkg->setLength(recvBytes);
-            pkg->getAddr().update();
-            receiver->work_callbackFunction(*pkg, receiver->socket, receiver->addPtr);
+        if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData())) > 0) {
+            pkg.setLength(recvBytes);
+            pkg.getAddr().update();
+            receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
         }
     }
 }

@@ -42,11 +42,9 @@ void network::ip_pkg::operator= (const network::ip_pkg that) {
         int tmp = 0;
         sem_getvalue(& (dataPTR_->semaphore), &tmp);
         if (tmp <= 0) {
-            std::cout << "destructor" << std::endl;
             delete dataPTR_;
         }
     }
-    std::cout << "operator =" << std::endl;
     dataPTR_ = that.dataPTR_;
     sem_post(& (dataPTR_->semaphore));
 }
