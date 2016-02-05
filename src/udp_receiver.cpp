@@ -103,9 +103,6 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
     udp_receiver recv(receiver);
 
     ip_pkg pkg;
-
-    
-
     if (receiver->socket.getFamily() == AF_INET) {
         ipv4_pkg pkg_v4(receiver->bufferSize, nullptr);
         pkg = pkg_v4;
