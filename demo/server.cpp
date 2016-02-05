@@ -8,6 +8,7 @@
 rw_container<std::set<std::string>>* rw_callback_set;
 void callback(network::ip_pkg& pkg, const network::udp_socket& socket, const void* addPtr) {
     bool CON2GET = false;
+    std::cout << "test" << std::endl;
     if (pkg.compare("CON")) {
         network::ipv4_addr& ipv4 = (static_cast<network::ipv4_addr&>(pkg.getAddr()));
         std::string spkg = ipv4.getIP() + ":" + std::to_string(ipv4.getPort());
