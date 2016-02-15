@@ -122,6 +122,7 @@ int main() {
     int summe1 = 0;
     int summe2 = 0;
     int num_it = 100;
+    
 
     for (int it = 0; it < num_it; it++) {
         std::chrono::high_resolution_clock::time_point t1;

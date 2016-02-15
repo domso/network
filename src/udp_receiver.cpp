@@ -19,7 +19,6 @@ network::udp_receiver::udp_receiver(network::udp_receiver::udp_receiver_data* da
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_receiver::~udp_receiver() {
-
     sem_wait(& (dataPTR_->semaphore));
     int tmp = 0;
     sem_getvalue(& (dataPTR_->semaphore), &tmp);
@@ -53,7 +52,7 @@ void network::udp_receiver::stop() {
     }
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-network::udp_receiver::udp_receiver_data::udp_receiver_data() : queue(5) {
+network::udp_receiver::udp_receiver_data::udp_receiver_data() {
     sem_init(&semaphore, 0, 1);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,6 +65,7 @@ network::udp_receiver::udp_receiver_init_param::udp_receiver_init_param() {
     sec2wait = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT;
     minThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD;
     maxThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD;
+    numThread = NETWORK_UDP_RECEIVER_INIT_PARAM_NUMTHREAD;
     addPtr = nullptr;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,44 +73,28 @@ void network::udp_receiver::udp_receiver_data::init(const network::udp_socket sk
     socket = skt;
     work_callbackFunction = work_cbFunction;
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (parameters == nullptr) {
-        // default config
-        bufferSize = NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE;
-        sec2wait = NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT;
-        minThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD;
-        maxThread = NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD;
-        addPtr = nullptr;
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    } else {
+    if (parameters != nullptr) {
         // set config
-        bufferSize = parameters->bufferSize;
-        sec2wait = parameters->sec2wait;
-        minThread = parameters->minThread;
-        maxThread = parameters->maxThread;
-        addPtr = parameters->addPtr;
+        param = *parameters;
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    buffer.resize(bufferSize, '\0');
-    queue.setPriority(numPriority);
+    buffer.resize(param.bufferSize, '\0');
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     threadState.start();
-    cont_thread = std::thread(contThread, this, sec2wait);
+    cont_thread = std::thread(contThread, this, param.sec2wait);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver::udp_receiver_data* receiver) {
+void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver::udp_receiver_data* receiver, int threadID) {
     int recvBytes = 0;
     int priority;
     udp_receiver recv(receiver);
 
     ip_pkg pkg;
-
-    
-
     if (receiver->socket.getFamily() == AF_INET) {
-        ipv4_pkg pkg_v4(receiver->bufferSize, nullptr);
+        ipv4_pkg pkg_v4(receiver->param.bufferSize, nullptr);
         pkg = pkg_v4;
     } else {
-        ipv6_pkg pkg_v6(receiver->bufferSize, nullptr);
+        ipv6_pkg pkg_v6(receiver->param.bufferSize, nullptr);
         pkg = pkg_v6;
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,7 +102,7 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
         if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData())) > 0) {
             pkg.setLength(recvBytes);
             pkg.getAddr().update();
-            receiver->work_callbackFunction(pkg, receiver->socket, receiver->addPtr);
+            receiver->work_callbackFunction(pkg, receiver->socket, receiver->param.addPtr);
         }
     }
 }
@@ -126,17 +110,18 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
 void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver::udp_receiver_data* receiver , int pollIntervall) {
     udp_receiver recv(receiver);
     receiver->socket.setTimeout(pollIntervall);
-    std::vector<std::thread> threads(receiver->minThread);
+    //std::vector<std::thread> threads(receiver->param.minThread);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    for (int tID = 0 ; tID < receiver->minThread + 1 ; tID++) {
-        threads[tID] = std::thread(recvThread, receiver);
+    for (int tID = 0; tID < receiver->param.numThread; tID++) {
+        std::thread thread(recvThread, receiver, );
+        thread.detach();
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    for (int i = 0; i < threads.size() ; i++) {
+    /*for (int i = 0; i < threads.size() ; i++) {
         if (threads[i].joinable()) {
             threads[i].join();
         }
-    }
+    }*/
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

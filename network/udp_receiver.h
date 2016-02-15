@@ -13,10 +13,11 @@
 #include "run_lock.h"
 
 
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE 1000
+#define NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE 1500
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT 1
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD 2
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD 2
+#define NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD -1
+#define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD -1
+#define NETWORK_UDP_RECEIVER_INIT_PARAM_NUMTHREAD 4
 
 
 
@@ -40,8 +41,9 @@ namespace network {
             // additional parameters for init()  
                 //int bufferSize; // size of the recv-buffer   
                 //int sec2wait; // timeout for blocking calls                          
-                //int maxThread; // maximum number of workThread-instances(=threads)               
-                //int minThread; // minimum number of workThread-instances(=threads)     
+                //int maxThread; // maximum number of threads               
+                //int minThread; // minimum number of threads     
+                //int numThread; // default/start number of threads
                 //void* addPtr // additional pointer, which will be passed to work_callbackFunction (default nullptr)
 
 
@@ -53,10 +55,12 @@ namespace network {
                 int bufferSize;
                 // timeout for blocking calls
                 int sec2wait;
-                // maximum number of workThread-instances(=threads)
+                // maximum number of threads
                 int maxThread;
-                // minimum number of workThread-instances(=threads)
+                // minimum number of threads
                 int minThread;
+                // default/start number of threads
+                int numThread;
                 // additional pointer, which will be passed to work_callbackFunction
                 void* addPtr;
 
@@ -82,7 +86,7 @@ namespace network {
                 void init(const network::udp_socket skt, void (*const work_cbFunction)(ip_pkg&, const udp_socket&, const void* addPtr),const udp_receiver::udp_receiver_init_param* const parameters);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // receiver-thread
-                static void recvThread(network::udp_receiver::udp_receiver_data* receiver);
+                static void recvThread(network::udp_receiver::udp_receiver_data* receiver, int threadID);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // controller-thread:
                 static void contThread(network::udp_receiver::udp_receiver_data* receiver, int pollIntervall);
@@ -101,22 +105,8 @@ namespace network {
                 std::vector<char> buffer;
                 // callback for incoming data (executed by workThread)
                 void (*work_callbackFunction)(ip_pkg&, const udp_socket&, const void*);
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // package-queue: recvThread --> workThread
-                shared_queue<ip_pkg> queue;
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // size of recv-buffer
-                int bufferSize;
-                // timeout for blocking calls
-                int sec2wait;
-                // maximum number of workThread-instances(=threads)
-                int maxThread;
-                // minimum number of workThread-instances(=threads)
-                int minThread;
-                // number of queue priorities
-                int numPriority;
-                // additional pointer, which will be passed to work_callbackFunction
-                void* addPtr;
+                udp_receiver_init_param param;
 
             };
             // private constructor to create a new smartPointer-Object from the internal ptr
