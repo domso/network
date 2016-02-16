@@ -97,7 +97,6 @@ void network::udp_receiver::udp_receiver_data::init(const network::udp_socket sk
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver::udp_receiver_data* receiver, int threadID) {
-    std::cout << "start thread with ID" << threadID << std::endl;
     int recvBytes = 0;
     udp_receiver recv(receiver);
     int numThreads;
@@ -141,6 +140,5 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
         next.join();
     }
     receiver->currentThreads--;
-    std::cout << "close thread with ID" << threadID << std::endl;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
