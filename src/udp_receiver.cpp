@@ -25,7 +25,6 @@ network::udp_receiver::~udp_receiver() {
     if (tmp <= 0) {
         delete dataPTR_;
     }
-
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::operator= (const network::udp_receiver that) {
@@ -46,10 +45,21 @@ void network::udp_receiver::init(const network::udp_socket socket, void (*const 
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::stop() {
-    dataPTR_->threadState.stop();
-    if (dataPTR_->cont_thread.joinable()) {
-        dataPTR_->cont_thread.join();
+    dataPTR_->numThreads.store(0);
+    if (dataPTR_->root_recv_thread.joinable()) {
+        dataPTR_->root_recv_thread.join();
     }
+}
+int network::udp_receiver::getThreadNum() {
+    return dataPTR_->numThreads.load();
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bool network::udp_receiver::setThreadNum(int num) {
+    if ((dataPTR_->param.minThread != -1 && dataPTR_->param.minThread > num) || (dataPTR_->param.maxThread != -1 && dataPTR_->param.maxThread < num)) {
+        return false;
+    }
+    dataPTR_->numThreads.store(num);
+    return true;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 network::udp_receiver::udp_receiver_data::udp_receiver_data() {
@@ -80,15 +90,19 @@ void network::udp_receiver::udp_receiver_data::init(const network::udp_socket sk
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     buffer.resize(param.bufferSize, '\0');
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    threadState.start();
-    cont_thread = std::thread(contThread, this, param.sec2wait);
+    numThreads.store(param.numThread);
+    currentThreads.store(0);
+    socket.setTimeout(param.sec2wait);
+    root_recv_thread = std::thread(recvThread, this, 0);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver::udp_receiver_data* receiver, int threadID) {
+    std::cout << "start thread with ID" << threadID << std::endl;
     int recvBytes = 0;
-    int priority;
     udp_receiver recv(receiver);
-
+    int numThreads;
+    std::thread next;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ip_pkg pkg;
     if (receiver->socket.getFamily() == AF_INET) {
         ipv4_pkg pkg_v4(receiver->param.bufferSize, nullptr);
@@ -98,31 +112,35 @@ void network::udp_receiver::udp_receiver_data::recvThread(network::udp_receiver:
         pkg = pkg_v6;
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    while (receiver->threadState.isRunning()) {
+    while (true) {
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if (threadID == receiver->currentThreads.load()) {
+            numThreads = receiver->numThreads.load();
+            if (threadID >= numThreads) {
+                break;
+            }
+            if (threadID + 1 < numThreads) {
+                
+                receiver->currentThreads++;
+                
+                if (next.joinable()) {
+                    next.join();
+                }
+                next = std::thread(recvThread, receiver, threadID + 1);
+            }
+        }
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if ((recvBytes = receiver->socket.recv(pkg.getAddr(), pkg.getData())) > 0) {
             pkg.setLength(recvBytes);
             pkg.getAddr().update();
             receiver->work_callbackFunction(pkg, receiver->socket, receiver->param.addPtr);
         }
     }
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void network::udp_receiver::udp_receiver_data::contThread(network::udp_receiver::udp_receiver_data* receiver , int pollIntervall) {
-    udp_receiver recv(receiver);
-    receiver->socket.setTimeout(pollIntervall);
-    //std::vector<std::thread> threads(receiver->param.minThread);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    for (int tID = 0; tID < receiver->param.numThread; tID++) {
-        std::thread thread(recvThread, receiver, );
-        thread.detach();
+    if (next.joinable()) {
+        next.join();
     }
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    /*for (int i = 0; i < threads.size() ; i++) {
-        if (threads[i].joinable()) {
-            threads[i].join();
-        }
-    }*/
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    receiver->currentThreads--;
+    std::cout << "close thread with ID" << threadID << std::endl;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-

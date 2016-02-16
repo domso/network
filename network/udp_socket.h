@@ -43,7 +43,7 @@ namespace network {
             // returns the port of the socket
             uint16_t getPort() const;
             // sets timeout for blocking calls (recv,send)
-            int setTimeout(const int sec) const;
+            int setTimeout(const float sec) const;
             // returns the sin_family
             int getFamily() const;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

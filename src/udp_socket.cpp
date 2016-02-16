@@ -65,10 +65,11 @@ bool network::udp_socket::isValid() const {
     return dataPTR_->valid;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int network::udp_socket::setTimeout(const int sec) const {
+int network::udp_socket::setTimeout(const float sec) const {
     struct timeval tv;
-    tv.tv_sec = sec;
-    tv.tv_usec = 0;
+    tv.tv_sec = (int)sec;
+    tv.tv_usec = (1000000.0*sec);
+    tv.tv_usec = tv.tv_usec % 1000000;   
     setsockopt(dataPTR_->skt, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

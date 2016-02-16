@@ -68,6 +68,12 @@ void server() {
 
 
     std::cin.get();
+    receiver.setThreadNum(7);
+    std::cin.get();
+    receiver.setThreadNum(3);
+    std::cin.get();
+    receiver.setThreadNum(5);    
+    std::cin.get();
     receiver.stop();
 }
 

@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <atomic>
 #include "ip_addr.h"
 #include "ip_pkg.h"
 #include "udp_socket.h"
@@ -14,7 +15,7 @@
 
 
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE 1500
-#define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT 1
+#define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT 0.1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD -1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD -1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_NUMTHREAD 4
@@ -54,7 +55,7 @@ namespace network {
                 // size of the recv-buffer
                 int bufferSize;
                 // timeout for blocking calls
-                int sec2wait;
+                float sec2wait;
                 // maximum number of threads
                 int maxThread;
                 // minimum number of threads
@@ -74,6 +75,16 @@ namespace network {
             // -> udp_receiver_data will NOT be freed until stop() is called!
             void stop();
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // gets current number of threads
+            int getThreadNum();
+            // set number of threads
+            // -> create/delete threads
+            // -> asynchron
+            // -> return false if minThread > num and minThread != -1
+            // -> return false if axThread < num and maxThread != -1
+            // -> return true otherwise
+            bool setThreadNum(int num);
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         private:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // data-struct for smartPointer
@@ -88,18 +99,13 @@ namespace network {
                 // receiver-thread
                 static void recvThread(network::udp_receiver::udp_receiver_data* receiver, int threadID);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // controller-thread:
-                static void contThread(network::udp_receiver::udp_receiver_data* receiver, int pollIntervall);
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // semaphore for smartPointer
                 sem_t semaphore;
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // threadpool-state (running|stop)
-                run_lock threadState;
                 // UDP-socket (=smartPointer!)
                 udp_socket socket;
-                // thread-handle for contThread();
-                std::thread cont_thread;
+                // thread-handle for root-recv-threads
+                std::thread root_recv_thread;
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 // buffer for socket.recv()
                 std::vector<char> buffer;
@@ -107,6 +113,8 @@ namespace network {
                 void (*work_callbackFunction)(ip_pkg&, const udp_socket&, const void*);
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 udp_receiver_init_param param;
+                std::atomic<int> currentThreads;
+                std::atomic<int> numThreads;
 
             };
             // private constructor to create a new smartPointer-Object from the internal ptr
