@@ -79,34 +79,15 @@ int foo(network::ipv4_pkg t) {
     return 0;
 }
 
-class A : public smart_ptr {
-
-public:
-    A() {
-        setNewData(new data());
-    }
-private:
-
-    struct data : smart_ptr_data {
-        int a;
 
 
-    };
-
-public:
-    data* operator->() {
-        return (data*)getData();
-    }
-
-};
-
-
+/*
 int main() {
 
     A a;
     a->a = 10;
     std::cout << a->a << std::endl;
-    
+
     return 0;
     rw_mutex rwmutex;
     rw_mutex::read read(rwmutex);
@@ -122,7 +103,7 @@ int main() {
     int summe1 = 0;
     int summe2 = 0;
     int num_it = 100;
-    
+
 
     for (int it = 0; it < num_it; it++) {
         std::chrono::high_resolution_clock::time_point t1;
@@ -185,4 +166,109 @@ int main() {
     double result2 = ((double) summe2 / (double) summe1) * 100;
     std::cout << "+: " << result2 << "%" << std::endl;
 
+}
+*/
+
+class A : public smart_ptr_ref {
+
+public:
+
+    A() {
+//         std::cout << "constructor" << std::endl;
+    }
+
+    A(const A& that) {
+//         std::cout << "copy-constructor" << std::endl;
+    }
+    ~A() {
+//         std::cout << "destructor" << std::endl;
+    }
+
+    int a;
+    int test() {
+        return a;
+    }
+
+
+};
+
+class B {
+
+public:
+
+    B() {
+//         std::cout << "constructor" << std::endl;
+    }
+
+    B(const A& that) {
+//         std::cout << "copy-constructor" << std::endl;
+    }
+    ~B() {
+//         std::cout << "destructor" << std::endl;
+    }
+
+    int a;
+    int test() {
+        return a;
+    }
+
+
+};
+
+void foo(smart_ptr<A> obj) {
+    (*obj).test();
+    obj->test();
+}
+void foo2(std::shared_ptr<B> obj) {
+    (*obj).test();
+    obj->test();
+}
+#define num_it 10000000
+int main() {
+    smart_ptr<A> a = new A();
+    
+    A& b = *a;
+    
+    
+
+    std::chrono::high_resolution_clock::time_point t1;
+    std::chrono::high_resolution_clock::time_point t2;
+
+    int sum1 = 0;
+    int sum2 = 0;
+
+    double result1,  result2;
+    
+    for (int i = 0; i < num_it; i++) {
+
+        t1 = std::chrono::high_resolution_clock::now();
+        {
+            std::shared_ptr<B> obj2 = std::make_shared<B>();
+            foo2(obj2);
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+
+
+        auto duration =  std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+        sum1 += duration;
+
+
+        t1 = std::chrono::high_resolution_clock::now();
+        {
+
+            smart_ptr<A> obj = new A();
+            foo(obj);
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+
+
+        duration =  std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+        sum2 += duration;
+    }
+    result1 = (double)sum1/num_it;
+    result2 = (double)sum2/num_it;
+    std::cout << result1 << "/" << result2 << std::endl;
+    return 0;
 }

@@ -1,69 +1,95 @@
 #ifndef smart_ptr_h
 #define smart_ptr_h
-# include <iostream>
-#include "semaphore.h"
+#include <iostream>
+#include <atomic>
 
-class smart_ptr {
+template<typename T>
+class smart_ptr;
+
+class smart_ptr_ref {
+
+public:
+    smart_ptr_ref() : refNum_(0) {
+
+    }
+    virtual ~smart_ptr_ref() {
+
+    }
+    smart_ptr_ref(const smart_ptr_ref& that) {
+
+    }
+
+    void operator = (const smart_ptr_ref& that) {
+
+    }
+    void add_reference() {
+        refNum_++;
+    }
+
+    bool del_reference() {
+        if (!refNum_--) {
+            delete this;
+            return true;
+        }
+        return false;
+    }
+    smart_ptr_ref* operator&() = delete;
+
+private:
+    std::atomic<int> refNum_;
+};
+
+template<typename T>
+class smart_ptr : public smart_ptr_ref {
 public:
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    smart_ptr() {
+    smart_ptr() : dataPTR_(nullptr) {
+
     }
     // copy constructor
     smart_ptr(const smart_ptr& that) {
         dataPTR_ = that.dataPTR_;
-        sem_post(& (dataPTR_->semaphore));
+        dataPTR_->add_reference();
+    }
+    smart_ptr(T* that) {
+        dataPTR_ = that;
+        //dataPTR_->add_reference();
     }
     // default destructor
     ~smart_ptr() {
         if (dataPTR_ != nullptr) {
-            sem_wait(& (dataPTR_->semaphore));
-            int tmp = 0;
-            sem_getvalue(& (dataPTR_->semaphore), &tmp);
-            if (tmp <= 0) {
-                delete dataPTR_;
+            if (dataPTR_->del_reference()) {
+                dataPTR_ = nullptr;
             }
         }
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // assignment for smartPointer
-    void operator =(const smart_ptr& that) {
+    void operator =(T* that) {
         if (dataPTR_ != nullptr) {
-            sem_wait(& (dataPTR_->semaphore));
-            int tmp = 0;
-            sem_getvalue(& (dataPTR_->semaphore), &tmp);
-            if (tmp <= 0) {
-                delete dataPTR_;
+            if (dataPTR_->del_reference()) {
+                dataPTR_ = nullptr;
             }
         }
-        dataPTR_ = that.dataPTR_;
-        sem_post(& (dataPTR_->semaphore));
+        dataPTR_ = that;
+        dataPTR_->add_reference();
     }
-protected:
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // data-struct for smartPointer
-    struct smart_ptr_data {
-        smart_ptr_data() {
-            sem_init(&semaphore, 0, 1);
-        }
-        ~smart_ptr_data() {
-            sem_destroy(&semaphore);
-        }
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // semaphore for smartPointer
-        sem_t semaphore;
-    };
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    void setNewData(smart_ptr_data* data) {
-        dataPTR_ = data;
+
+
+
+    smart_ptr<T>* operator&() = delete;
+
+    T& operator*() {
+        return *dataPTR_;
     }
-    //
-    smart_ptr_data* getData() {
+    T* operator->() {
         return dataPTR_;
     }
-private:
+
+protected:
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // ptr to internal data
-    smart_ptr_data* dataPTR_;
+    T* dataPTR_;
 };
 
 
