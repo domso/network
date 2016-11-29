@@ -3,103 +3,65 @@
 #include <vector>
 #include <mutex>
 #include <unordered_set>
-#include<sys/socket.h>
-#include<arpa/inet.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include "semaphore.h"
 #include "shared_queue.h"
 #include "ip_addr.h"
 #include "ip_pkg.h"
 
+#include "base_socket.h"
 
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // smartPointer-wrapper for an udp-socket
-    class udp_socket {
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    template<typename IP_ADDR_TYPE> 
+    class udp_socket : base_socket<IP_ADDR_TYPE>{
         public:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // default constructor
-            udp_socket();
-            // copy constructor
-            udp_socket ( const udp_socket& that );
-            // default destructor
-            ~udp_socket();
+            udp_socket(); {
+
+            }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // assignment for smartPointer
-            void operator =( const udp_socket that );
+            // copy constructor
+            udp_socket ( const udp_socket& that ) = delete;
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // default destructor
+            ~udp_socket() {
+
+            }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // create a new udp socket and bind it to PORT
-            bool init(const uint16_t PORT, const int family = AF_INET);
+            bool init(const uint16_t PORT){
+                local_addr_.init("", PORT);
+                if ((skt_ = socket(local_addr_.getFamily(), SOCK_DGRAM, IPPROTO_UDP)) != -1) {
+                     if (bind(skt_, (sockaddr*)&local_addr_.getSockaddr_in(), sizeof(local_addr_.getSockaddr_in())) != -1) {
+                            open();
+                            return true;
+                        }
+                }
+                return false;
+            }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // see man shutdown()
-            void shutRD() const;
-            // see man shutdown()
-            void shutWR() const;
-            // see man shutdown()
-            void shutRDWR() const;
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // returns true if the socket was successfully created
-            bool isValid() const;
-            // returns the port of the socket
-            uint16_t getPort() const;
-            // sets timeout for blocking calls (recv,send)
-            int setTimeout(const float sec) const;
-            // returns the sin_family
-            int getFamily() const;
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // sends msglen bytes from buffer to address (msglen > 0)
-            // sends buffer.size() bytes from buffer to address (msglen <= 0)
+            // sends msglen bytes from buffer to address 
             // flags -> see 'man sendto()'
             // returns size of successfully send data
-            ssize_t send(const network::ip_addr& address, const std::vector< char >& buffer, const int msglen = -1, const int flags = 0 ) const;
+            ssize_t send(const IP_ADDR_TYPE& addr, const std::vector< char >& buffer, const int msglen, const int flags = 0 ) const {
+                return sendto(skt_, buffer.data(), msglen, flags, (sockaddr*) &addr.getSockaddr_in(), sizeof(addr.getSockaddr_in()));
+            }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // sends msglen bytes from buffer to address (msglen > 0)
-            // sends buffer.length() bytes from buffer to address (msglen <= 0)
-            // flags -> see 'man sendto()'
-            // returns size of successfully send data
-            ssize_t send(const network::ip_addr& address, const std::string& buffer, const int msglen = -1, const int flags = 0 ) const;
-            // sends pkg
-            // flags -> see 'man sendto()'
-            // returns size of successfully send data
-            ssize_t send(const ip_pkg& pkg, const int flags = 0 ) const;
             // recvs data
             // -> returns size of recv-data
             // -> buffer: data will be stored here
             // -> address: address of the sender
             // -> flags: see 'man recvfrom()'
-            ssize_t recv(const network::ip_addr& address, std::vector< char >& buffer, const int flags = 0 ) const;
+            ssize_t recv(const IP_ADDR_TYPE& addr, std::vector< char >& buffer, const int flags = 0 ) const {
+                    socklen_t address_len = sizeof(addr.getSockaddr_in());
+                    return recvfrom(skt, buffer.data(), buffer.size(), flags, (sockaddr*) &addr.getSockaddr_in(), &address_len);
+            }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        private:
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // data-struct for smartPointer
-            struct udp_socket_data {
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                udp_socket_data();
-                ~udp_socket_data();
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // set parameter
-                bool init(const uint16_t PORT, const int family);
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // semaphore for smartPointer
-                sem_t semaphore;
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // udp-socket handle
-                int skt;
-                // udp-socket port
-                uint16_t port;              
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // is the socket ready
-                bool valid;
-                // socket family AF_INET/AF_INET6
-                int sin_family;
-
-            };
-
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // ptr to the internal data
-            udp_socket_data* dataPTR_;
     };
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 }
 
 #endif
