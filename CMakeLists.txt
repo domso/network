@@ -10,16 +10,12 @@ add_library(network SHARED
 	src/ip_pkg.cpp
 	src/run_lock.cpp
 	src/rw_mutex.cpp
-	src/udp_receiver.cpp
-	src/udp_socket.cpp
 )
 add_library(network_static STATIC
 	src/ip_addr.cpp
 	src/ip_pkg.cpp
 	src/run_lock.cpp
 	src/rw_mutex.cpp
-	src/udp_receiver.cpp
-	src/udp_socket.cpp
 )
 
 

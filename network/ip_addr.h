@@ -22,7 +22,7 @@ namespace network {
         // update IP and PORT from internal data
         virtual void update()  = 0;
         // returns the socket family AF_INET/AF_INET6
-        virtual static int family = 0;
+        virtual int getFamily() const = 0;
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     };
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,7 +37,7 @@ namespace network {
         // returns the IP
         const std::string getIP() const;
         // returns the internal data
-        const sockaddr_in& getSockaddr_in() const;
+        const sockaddr_in* getSockaddr_in() const;
         // update IP and PORT from internal data
         void update();
         // returns the socket family AF_INET/AF_INET6
@@ -66,7 +66,7 @@ namespace network {
         // returns the IP
         const std::string getIP() const;
         // returns the internal data
-        const sockaddr_in6& getSockaddr_in() const;
+        const sockaddr_in6* getSockaddr_in() const;
         // update IP and PORT from internal data
         void update();
         // returns the socket family AF_INET/AF_INET6

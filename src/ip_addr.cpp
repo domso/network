@@ -14,12 +14,12 @@ network::ip_addr::~ip_addr() {
 
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-const sockaddr_in& network::ipv4_addr::getSockaddr_in() const {
-    return network_addr_v4_;
+const sockaddr_in* network::ipv4_addr::getSockaddr_in() const {
+    return &network_addr_v4_;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-const sockaddr_in6& network::ipv6_addr::getSockaddr_in6() const {
-    return network_addr_v6_;
+const sockaddr_in6* network::ipv6_addr::getSockaddr_in() const {
+    return &network_addr_v6_;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void network::ipv4_addr::update() {
@@ -47,7 +47,7 @@ bool network::ipv4_addr::init(const std::string IP, const uint16_t PORT) {
         return true;
     }
     
-    return false
+    return false;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool network::ipv6_addr::init(const std::string IP, const uint16_t PORT) {
@@ -58,7 +58,7 @@ bool network::ipv6_addr::init(const std::string IP, const uint16_t PORT) {
     network_addr_v6_.sin6_addr = in6addr_any;
     
     if (IP != "" && inet_pton(AF_INET6, IP.c_str() , &network_addr_v6_.sin6_addr) == 1) {
-        return = true;
+        return true;
     }
 
     return false;
