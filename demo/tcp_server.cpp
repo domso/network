@@ -20,6 +20,7 @@ void server() {
 	while (true) {
 		network::tcp_connection<network::ipv4_addr>* connection = socket.acceptConnection();
 
+		network::ip_addr* testPtr;
 		
 
 		if (connection != nullptr) {
