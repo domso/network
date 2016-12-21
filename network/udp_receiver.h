@@ -20,8 +20,18 @@
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD -1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_NUMTHREAD 4
 
+namespace network {
+    class udp_receiver {
+        
+        
+        
+        
+        
+    };
+}
 
 
+/*
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // smartPointer-callback-receiver for udp_socket
@@ -128,7 +138,7 @@ namespace network {
 }
 
 
-
+*/
 
 #endif
 

@@ -14,13 +14,13 @@
 
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // smartPointer-wrapper for an udp-socket
+    // 
     template<typename IP_ADDR_TYPE> 
     class udp_socket : base_socket<IP_ADDR_TYPE>{
         public:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // default constructor
-            udp_socket(); {
+            udp_socket() {
 
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,10 +34,10 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // create a new udp socket and bind it to PORT
             bool init(const uint16_t PORT){
-                local_addr_.init("", PORT);
-                if ((skt_ = socket(local_addr_.getFamily(), SOCK_DGRAM, IPPROTO_UDP)) != -1) {
-                     if (bind(skt_, (sockaddr*)&local_addr_.getSockaddr_in(), sizeof(local_addr_.getSockaddr_in())) != -1) {
-                            open();
+                this->addr_.init("", PORT);
+                if ((this->skt_ = socket(this->addr_.getFamily(), SOCK_DGRAM, IPPROTO_UDP)) != -1) {
+                     if (bind(this->skt_, (sockaddr*)&this->addr_.getSockaddr_in(), sizeof(this->addr_.getSockaddr_in())) != -1) {
+                            this->open();
                             return true;
                         }
                 }
@@ -47,8 +47,8 @@ namespace network {
             // sends msglen bytes from buffer to address 
             // flags -> see 'man sendto()'
             // returns size of successfully send data
-            ssize_t send(const IP_ADDR_TYPE& addr, const std::vector< char >& buffer, const int msglen, const int flags = 0 ) const {
-                return sendto(skt_, buffer.data(), msglen, flags, (sockaddr*) &addr.getSockaddr_in(), sizeof(addr.getSockaddr_in()));
+            ssize_t send(const IP_ADDR_TYPE& addr, const char* buffer, const int msglen, const int flags = 0 ) const {
+                return sendto(this->skt_, buffer, msglen, flags, (sockaddr*) &addr.getSockaddr_in(), sizeof(addr.getSockaddr_in()));
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // recvs data
@@ -56,9 +56,9 @@ namespace network {
             // -> buffer: data will be stored here
             // -> address: address of the sender
             // -> flags: see 'man recvfrom()'
-            ssize_t recv(const IP_ADDR_TYPE& addr, std::vector< char >& buffer, const int flags = 0 ) const {
+            ssize_t recv(const IP_ADDR_TYPE& addr,const char* buffer, const int flags = 0 ) const {
                     socklen_t address_len = sizeof(addr.getSockaddr_in());
-                    return recvfrom(skt, buffer.data(), buffer.size(), flags, (sockaddr*) &addr.getSockaddr_in(), &address_len);
+                    return recvfrom(this->skt_, buffer, buffer.size(), flags, (sockaddr*) &addr.getSockaddr_in(), &address_len);
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     };

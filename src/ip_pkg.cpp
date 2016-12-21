@@ -1,5 +1,5 @@
 #include "network/ip_pkg.h"
-
+/*
 network::ip_pkg::ip_pkg() : dataPTR_(nullptr){
 
 }
@@ -151,3 +151,4 @@ void network::ipv6_pkg::ipv6_pkg_data::setAddr(const network::ip_addr* addr) {
 }
 
 
+*/
