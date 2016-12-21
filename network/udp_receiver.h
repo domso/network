@@ -14,13 +14,42 @@
 #include "run_lock.h"
 
 
+namespace network {
+    template<typename IP_ADDR_TYPE,  typename HEADER_TYPE, typename DATA_TYPE>
+    class udp_receiver {
+
+    public:
+        
+        udp_receiver(const udp_socket<IP_ADDR_TYPE>& skt,int bufferSize) : skt_(skt),  msg_buffer_(bufferSize){
+            
+        }
+        
+        ~udp_receiver() {
+            
+        }
+        
+        void set_skt(const udp_socket<IP_ADDR_TYPE>& skt) {
+            skt_ = skt;
+        }
+        
+        void resizeBuffer(int bufferSize) {
+            msg_buffer_.resize(bufferSize);
+        }
+        
+        std::vector<char> msg_buffer_;
+        udp_socket<IP_ADDR_TYPE>& skt_;
+    };
+
+}
+
+
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_BUFFERSIZE 1500
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_SEC2WAIT 0.1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MINTHREAD -1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_MAXTHREAD -1
 #define NETWORK_UDP_RECEIVER_INIT_PARAM_NUMTHREAD 4
 
-
+/*
 
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,7 +157,7 @@ namespace network {
 }
 
 
-
+*/
 
 #endif
 

@@ -6,20 +6,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 project(network)
 
 add_library(network SHARED
-	src/ip_addr.cpp
-	src/ip_pkg.cpp
-	src/run_lock.cpp
-	src/rw_mutex.cpp
+    src/ip_addr.cpp
 )
 add_library(network_static STATIC
 	src/ip_addr.cpp
-	src/ip_pkg.cpp
-	src/run_lock.cpp
-	src/rw_mutex.cpp
 )
-
 
 add_executable(network_test demo/test.cpp)
 target_link_libraries(network_test network_static pthread)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -std=c++11 -fPIC")

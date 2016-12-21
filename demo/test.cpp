@@ -1,6 +1,6 @@
 
 #include "network/rw_mutex.h"
-#include "network/udp_receiver.h"
+#include "network/udp_socket.h"
 #include "network/smart_ptr.h"
 #include <mutex>
 #include <iostream>
@@ -8,6 +8,15 @@
 #include <thread>
 #include <vector>
 
+
+int main() {
+    
+    network::udp_socket<network::ipv4_addr> socket;
+    
+    
+}
+
+/*
 volatile int tmp = 0;
 
 #define DELAY_READ 1000
@@ -81,7 +90,7 @@ int foo(network::ipv4_pkg t) {
 
 
 
-/*
+
 int main() {
 
     A a;
@@ -167,7 +176,6 @@ int main() {
     std::cout << "+: " << result2 << "%" << std::endl;
 
 }
-*/
 
 class A : public smart_ptr_ref {
 
@@ -272,3 +280,5 @@ int main() {
     std::cout << result1 << "/" << result2 << std::endl;
     return 0;
 }
+
+*/
