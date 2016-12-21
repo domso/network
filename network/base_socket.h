@@ -1,8 +1,10 @@
 #ifndef base_socket_def
 #define base_socket_def
 
-#include "ip_addr.h"
 #include "unistd.h"
+
+#include "ip_addr.h"
+
 
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,23 +20,30 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             base_socket(base_socket& conn) = delete;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // Description:
+            // - closes the socket
             ~base_socket() {
-                closeSocket();                
+                while(!closeSocket());
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // updates the address and sets the the close-flag
+            // Description:
+            // - updates the address and sets the the close-flag
             void open() {
                 addr_.update();
                 closed_ = false;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // returns the address of the socket
+            // Return:
+            // - address of the socket
             IP_ADDR_TYPE& getAddr() {
                 return addr_;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // sets timeout for blocking calls (recv,send)
-            int setTimeout(const float sec) const {
+            // Description:
+            // - sets timeout for blocking calls (recv,send)
+            // Parameter:
+            // - sec: maximal number of seconds any blocking-call will wait
+            void setTimeout(const float sec) const {
                 struct timeval tv;
                 tv.tv_sec = (int)sec;
                 tv.tv_usec = (1000000.0*sec);
@@ -42,36 +51,47 @@ namespace network {
                 setsockopt(skt_, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // sets new socket
+            // Description:
+            // - sets new socket
+            // Parameter:
+            // - skt: any socket (accordingly to the child-class)
             void setSocket(int skt) {
                 skt_ = skt;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // tries to close socket
+            // Description:
+            // - tries to close the socket
+            // Return:
+            // - true: the socket could closed succesfully or was already closed
+            // - false: on any error
             bool closeSocket() {
-                if (!closed_ && close(skt_) != -1) {
+                if (closed_ || close(skt_) != -1) {
                     closed_ = true;
                     return true;
                 }
                 return false;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // returns the current close-state
+            // Return:
+            // - current close-state
             bool isClosed() const {
                 return closed_;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // see man shutdown()
+            // Description:
+            // - see man shutdown()
             void shutRD() const {
                 shutdown(skt_, SHUT_RD);
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // see man shutdown()
+            // Description:
+            // - see man shutdown()
             void shutWR() const {
                 shutdown(skt_, SHUT_WR);
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // see man shutdown()
+            // Description:
+            // - see man shutdown()
             void shutRDWR() const {
                 shutdown(skt_, SHUT_RDWR);
             }
@@ -90,6 +110,5 @@ namespace network {
 
 
 }
-
 
 #endif

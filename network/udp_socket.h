@@ -1,67 +1,112 @@
 #ifndef udp_socket_h
 #define udp_socket_h
-#include <vector>
-#include <mutex>
-#include <unordered_set>
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "semaphore.h"
-#include "shared_queue.h"
-#include "ip_addr.h"
-#include "ip_pkg.h"
 
+#include "ip_addr.h"
 #include "base_socket.h"
+#include "pkt_buffer.h"
+
 
 namespace network {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // 
-    template<typename IP_ADDR_TYPE> 
-    class udp_socket : base_socket<IP_ADDR_TYPE>{
+    // A wrapper for the classical udp-sockets
+    template<typename IP_ADDR_TYPE>
+    class udp_socket : public base_socket<IP_ADDR_TYPE> {
         public:
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // default constructor
             udp_socket() {
 
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // copy constructor
-            udp_socket ( const udp_socket& that ) = delete;
+            udp_socket(const udp_socket& that) = delete;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // default destructor
+            // Description:
+            // - closes the socket
             ~udp_socket() {
 
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // create a new udp socket and bind it to PORT
-            bool init(const uint16_t PORT){
-                this->addr_.init("", PORT);
+            // Description:
+            // - creates a new udp socket and bind it to port
+            // Parameter:
+            // - port: application-port for the udp-protocol on which the new socket will be binded
+            // Return:
+            // - true  | on success
+            // - false | on any error
+            bool init(const uint16_t port) {
+                // initialize the socket address
+                this->addr_.init("", port);
+                // create new socket
                 if ((this->skt_ = socket(this->addr_.getFamily(), SOCK_DGRAM, IPPROTO_UDP)) != -1) {
-                     if (bind(this->skt_, (sockaddr*)&this->addr_.getSockaddr_in(), sizeof(this->addr_.getSockaddr_in())) != -1) {
-                            this->open();
-                            return true;
-                        }
+                    // bind the socket to the address
+                    if (bind(this->skt_, (sockaddr*)this->addr_.getSockaddr_in(), sizeof(*this->addr_.getSockaddr_in())) != -1) {
+                        // mark the socket as open
+                        this->open();
+                        return true;
+                    }
                 }
                 return false;
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // sends msglen bytes from buffer to address 
-            // flags -> see 'man sendto()'
-            // returns size of successfully send data
-            ssize_t send(const IP_ADDR_TYPE& addr, const char* buffer, const int msglen, const int flags = 0 ) const {
-                return sendto(this->skt_, buffer, msglen, flags, (sockaddr*) &addr.getSockaddr_in(), sizeof(addr.getSockaddr_in()));
+            // Description:
+            // - sends numberOfData*sizeof(MSG_DATA_TYPE) Bytes starting from buffer to the destination-address
+            // Parameters:
+            // - dest: destination-address
+            // - buffer: pointer to atleast one valid MSG_DATA_TYPE-instance
+            // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
+            // - flags: see 'man sendto()'
+            // Return:
+            // - size of successfully send data
+            template <typename MSG_DATA_TYPE>
+            ssize_t sendData(const IP_ADDR_TYPE& dest, const MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
+                return sendto(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in()));
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // recvs data
-            // -> returns size of recv-data
-            // -> buffer: data will be stored here
-            // -> address: address of the sender
-            // -> flags: see 'man recvfrom()'
-            ssize_t recv(const IP_ADDR_TYPE& addr,const char* buffer, const int flags = 0 ) const {
-                    socklen_t address_len = sizeof(addr.getSockaddr_in());
-                    return recvfrom(this->skt_, buffer, buffer.size(), flags, (sockaddr*) &addr.getSockaddr_in(), &address_len);
+            // Description:
+            // - receives maximal numberOfData*sizeof(MSG_DATA_TYPE) Bytes from any source-address and stores them into the buffer
+            // Parameters:
+            // - src: source-address
+            // - buffer: pointer to atleast one valid MSG_DATA_TYPE-instance
+            // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
+            // - flags: see 'man recvfrom()'
+            // Return:
+            // - size of successfully received data
+            template <typename MSG_DATA_TYPE>
+            ssize_t recvData(IP_ADDR_TYPE& src, MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
+                socklen_t address_len = sizeof(*src.getSockaddr_in());
+                return recvfrom(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.getSockaddr_in(), &address_len);
+            }
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // Description:
+            // - sends buffer.msgLen()-Bytes from the buffer-content to the destination-address
+            // Parameters:
+            // - dest: destination-address
+            // - buffer: reference to a pkt_buffer with a msgLen > 0
+            // - flags: see 'man sendto()'
+            // Return:
+            // - size of successfully send data
+            size_t sendPkt(IP_ADDR_TYPE& dest, pkt_buffer& buffer, const int flags = 0) const {
+                return sendto(this->skt_, buffer.data(), buffer.msgLen(), flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in()));
+            }
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // Description:
+            // - receives maximal buffer.capacity-Bytes from any source-address and stores them into the buffer
+            // Parameters:
+            // - src: source-address
+            // - buffer: reference to a pkt_buffer
+            // - flags: see 'man recvfrom()'
+            // Return:
+            // - size of successfully received data
+            ssize_t recvPkt(IP_ADDR_TYPE& src, pkt_buffer& buffer, const int flags = 0) const {
+                socklen_t address_len = sizeof(*src.getSockaddr_in());
+                buffer.setMsgLen(recvfrom(this->skt_, buffer.data(), buffer.capacity(), flags, (sockaddr*) src.getSockaddr_in(), &address_len));
+                return buffer.msgLen();
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     };
+
 }
 
 #endif
