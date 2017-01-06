@@ -6,7 +6,7 @@
 #include "network/tcp_connection.h"
 
 struct msgProtocol {
-    char status;
+    int status;
     char flags;
     char data[4];
 };
@@ -17,11 +17,8 @@ struct msgProtocol {
 void tcp_test() {
 
     network::tcp_socket<network::ipv4_addr> socket_in;
-    network::ipv4_addr listenOnAddress;
 
-    listenOnAddress.init("", 8005);
-
-    if (!socket_in.acceptOn(listenOnAddress, 10)) {
+    if (!socket_in.acceptOn(8005, 10)) {
         std::cout << "Could not create Socket!" << std::endl;
         return;
     }
@@ -59,15 +56,16 @@ void udp_test() {
 
     socket.init(346);
 
+    
 
     msgProtocol msg;
-
-
-
-
-    socket.sendData<msgProtocol>(addr, &msg);
-
-
+    socket.recvData<msgProtocol>(addr, &msg);
+    if (msg.status == 0) {
+        
+    } else {
+        
+    }
+        
 
     while (!socket.closeSocket());
 

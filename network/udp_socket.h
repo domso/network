@@ -58,10 +58,10 @@ namespace network {
             // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
             // - flags: see 'man sendto()'
             // Return:
-            // - size of successfully send data
+            // - number of successfully send MSG_DATA_TYPE-objects
             template <typename MSG_DATA_TYPE>
             ssize_t sendData(const IP_ADDR_TYPE& dest, const MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
-                return sendto(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in()));
+                return sendto(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in())) / sizeof(MSG_DATA_TYPE);
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // Description:
@@ -72,11 +72,11 @@ namespace network {
             // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
             // - flags: see 'man recvfrom()'
             // Return:
-            // - size of successfully received data
+            // - number of successfully received MSG_DATA_TYPE-objects
             template <typename MSG_DATA_TYPE>
             ssize_t recvData(IP_ADDR_TYPE& src, MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
                 socklen_t address_len = sizeof(*src.getSockaddr_in());
-                return recvfrom(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.getSockaddr_in(), &address_len);
+                return recvfrom(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.getSockaddr_in(), &address_len) / sizeof(MSG_DATA_TYPE);
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // Description:

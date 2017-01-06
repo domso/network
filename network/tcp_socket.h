@@ -29,16 +29,17 @@ namespace network {
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // Description:
             // - initializes a new tcp-socket
-            // - binds the socket on an address
+            // - binds the socket on an port
             // - starts listening for new connections
             // Parameters:
-            // - addr: the address on which the socket will be binded
+            // - port: the port on which the socket will be binded
             // - backlog: maximal number of pending connections
             // Return:
             // - true  | on success
             // - false | on any error
-            bool acceptOn(IP_ADDR_TYPE addr, int backlog) {
-                this->addr_ = addr;
+            bool acceptOn(const uint16_t port, int backlog) {
+                // initialize the socket address
+                this->addr_.init("", port);
 
                 // create new socket
                 this->skt_ = socket(this->addr_.getFamily(), SOCK_STREAM, 0);
@@ -68,6 +69,29 @@ namespace network {
             tcp_connection<IP_ADDR_TYPE>* acceptConnection() {
                 // create object for new connection
                 network::tcp_connection<IP_ADDR_TYPE>* connection = new network::tcp_connection<IP_ADDR_TYPE>();
+                socklen_t clientlen = sizeof(*(connection->getAddr().getSockaddr_in()));
+
+                // accept new incoming connection
+                int skt = accept(this->skt_, (struct sockaddr*) connection->getAddr().getSockaddr_in(), &clientlen);
+                if (skt == -1) {
+                    return nullptr;
+                }
+
+                // combine socket and connection-object
+                connection->setSocket(skt);
+                // mark the socket as open
+                connection->open();
+
+                return connection;
+            }
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // Description:
+            // - accepts new connections on the socket
+            // Parameter:
+            // - connection: a valid noninitialized instance of tcp_connection in which the connection will be stored
+            // Return:
+            // - pointer to a new tcp_connection instance
+            tcp_connection<IP_ADDR_TYPE>* acceptConnection(network::tcp_connection<IP_ADDR_TYPE>* connection) {
                 socklen_t clientlen = sizeof(*(connection->getAddr().getSockaddr_in()));
 
                 // accept new incoming connection
