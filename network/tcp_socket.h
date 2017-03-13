@@ -4,29 +4,32 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
 #include "ip_addr.h"
 #include "base_socket.h"
 #include "tcp_connection.h"
 
-
 namespace network {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //______________________________________________________________________________________________________
+    //
     // A wrapper for the classical tcp-accept-sockets
+    //______________________________________________________________________________________________________
     template<typename IP_ADDR_TYPE>
     class tcp_socket : public network::base_socket<IP_ADDR_TYPE> {
         public:
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            
             tcp_socket() {
 
             }
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //______________________________________________________________________________________________________
+            //
             // Description:
             // - closes the socket
+            //______________________________________________________________________________________________________
             ~tcp_socket() {
 
             }
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //______________________________________________________________________________________________________
+            //
             // Description:
             // - initializes a new tcp-socket
             // - binds the socket on an port
@@ -37,6 +40,7 @@ namespace network {
             // Return:
             // - true  | on success
             // - false | on any error
+            //______________________________________________________________________________________________________
             bool acceptOn(const uint16_t port, int backlog) {
                 // initialize the socket address
                 this->addr_.init("", port);
@@ -59,14 +63,17 @@ namespace network {
                 // start listening for new incoming connections
                 return listen(this->skt_, backlog) == 0;
             }
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //______________________________________________________________________________________________________
+            //
             // Description:
             // - accepts new connections on the socket
             // - creates a new tcp_connection-object with the accepted socket
             // - the object needs to be freed with 'destroy()' manually
             // Return:
             // - pointer to a new tcp_connection instance
-            tcp_connection<IP_ADDR_TYPE>* acceptConnection() {
+            // - nullptr on any error
+            //______________________________________________________________________________________________________
+            tcp_connection<IP_ADDR_TYPE>* acceptConnection() const {
                 // create object for new connection
                 network::tcp_connection<IP_ADDR_TYPE>* connection = new network::tcp_connection<IP_ADDR_TYPE>();
                 socklen_t clientlen = sizeof(*(connection->getAddr().getSockaddr_in()));
@@ -84,20 +91,22 @@ namespace network {
 
                 return connection;
             }
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //______________________________________________________________________________________________________
+            //
             // Description:
             // - accepts new connections on the socket
             // Parameter:
             // - connection: a valid noninitialized instance of tcp_connection in which the connection will be stored
             // Return:
-            // - pointer to a new tcp_connection instance
-            tcp_connection<IP_ADDR_TYPE>* acceptConnection(network::tcp_connection<IP_ADDR_TYPE>* connection) {
+            // - true if no error occured
+            //______________________________________________________________________________________________________
+            bool acceptConnection(network::tcp_connection<IP_ADDR_TYPE>* connection) const {
                 socklen_t clientlen = sizeof(*(connection->getAddr().getSockaddr_in()));
 
                 // accept new incoming connection
                 int skt = accept(this->skt_, (struct sockaddr*) connection->getAddr().getSockaddr_in(), &clientlen);
                 if (skt == -1) {
-                    return nullptr;
+                    return false;
                 }
 
                 // combine socket and connection-object
@@ -105,12 +114,9 @@ namespace network {
                 // mark the socket as open
                 connection->open();
 
-                return connection;
+                return true;
             }
-            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     };
-
-
 }
 
 #endif
