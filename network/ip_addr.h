@@ -38,12 +38,6 @@ namespace network {
             virtual const std::string getIP() const = 0;
             //______________________________________________________________________________________________________
             //
-            // Description:
-            // - updates the ip-textform from the internal data
-            //______________________________________________________________________________________________________
-            virtual void update()  = 0;
-            //______________________________________________________________________________________________________
-            //
             // Return:
             // - socket family AF_INET/AF_INET6
             //______________________________________________________________________________________________________
@@ -87,7 +81,10 @@ namespace network {
             // - IP in the standardized textform
             //______________________________________________________________________________________________________
             const std::string getIP() const {
-                return ip_v4_;
+                char buffer_v4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &network_addr_v4_.sin_addr, buffer_v4, INET_ADDRSTRLEN);
+                std::string tmp_v4(buffer_v4);
+                return tmp_v4;
             }
             //______________________________________________________________________________________________________
             //
@@ -96,17 +93,6 @@ namespace network {
             //______________________________________________________________________________________________________
             const sockaddr_in* getSockaddr_in() const {
                 return &network_addr_v4_;
-            }
-            //______________________________________________________________________________________________________
-            //
-            // Description:
-            // - updates the ip-textform from the internal data
-            //______________________________________________________________________________________________________
-            void update() {
-                char buffer_v4[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &network_addr_v4_.sin_addr, buffer_v4, INET_ADDRSTRLEN);
-                std::string tmp_v4(buffer_v4);
-                ip_v4_ = tmp_v4;
             }
             //______________________________________________________________________________________________________
             //
@@ -119,8 +105,6 @@ namespace network {
         protected:
             // internal data
             sockaddr_in network_addr_v4_;
-            // ips as string
-            std::string ip_v4_;
     };
     //______________________________________________________________________________________________________
     //
@@ -160,7 +144,10 @@ namespace network {
             // - IP in the standardized textform
             //______________________________________________________________________________________________________
             const std::string getIP() const {
-                return ip_v6_;
+                char buffer_v6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
+                std::string tmp_v6(buffer_v6);
+                return tmp_v6;
             }
             //______________________________________________________________________________________________________
             //
@@ -168,17 +155,6 @@ namespace network {
             //______________________________________________________________________________________________________
             const sockaddr_in6* getSockaddr_in() const {
                 return &network_addr_v6_;
-            }
-            //______________________________________________________________________________________________________
-            //
-            // Description:
-            // - updates the ip-textform from the internal data
-            //______________________________________________________________________________________________________
-            void update() {
-                char buffer_v6[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
-                std::string tmp_v6(buffer_v6);
-                ip_v6_ = tmp_v6;
             }
             //______________________________________________________________________________________________________
             //
@@ -191,8 +167,6 @@ namespace network {
         protected:
             // internal data
             sockaddr_in6 network_addr_v6_;
-            // ips as string
-            std::string ip_v6_;
     };
 }
 

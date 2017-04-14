@@ -31,7 +31,6 @@ namespace network {
             // - updates the address and sets the the close-flag
             //______________________________________________________________________________________________________
             void open() {
-                addr_.update();
                 closed_ = false;
             }
             //______________________________________________________________________________________________________
@@ -55,6 +54,7 @@ namespace network {
                 tv.tv_usec = (1000000.0 * sec);
                 tv.tv_usec = tv.tv_usec % 1000000;
                 setsockopt(skt_, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
+                setsockopt(skt_, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
             }
             //______________________________________________________________________________________________________
             //

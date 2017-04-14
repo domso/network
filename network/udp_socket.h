@@ -120,6 +120,8 @@ namespace network {
                 if (result < 1) {
                     buffer.setMsgLen(0);
                     result = ((errno == EAGAIN) & (result == -1)) - 1;
+                } else {
+                    buffer.setMsgLen(result);
                 }
                 return result;
             }

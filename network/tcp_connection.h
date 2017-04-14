@@ -31,6 +31,32 @@ namespace network {
             //______________________________________________________________________________________________________
             //
             // Description:
+            // - tries to open a connection to the host specified by 'addr'
+            // Parameter:
+            // - addr: host-address
+            // Return:
+            // - true  | on success
+            // - false | on error
+            //______________________________________________________________________________________________________       
+            bool connectTo(const IP_ADDR_TYPE& addr){
+                this->addr_ = addr;
+                
+                // create new socket
+                this->skt_ = socket(this->addr_.getFamily(), SOCK_STREAM, 0);
+                if (this->skt_ == -1) {
+                    return false;
+                }
+                
+                if (connect(this->skt_, (struct sockaddr*) this->addr_.getSockaddr_in(), sizeof(*(this->addr_.getSockaddr_in()))) != 0) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            //______________________________________________________________________________________________________
+            //
+            // Description:
             // - sends numberOfData*sizeof(MSG_DATA_TYPE) Bytes starting from buffer
             // Parameters:
             // - buffer: pointer to atleast one valid MSG_DATA_TYPE-instance
