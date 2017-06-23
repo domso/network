@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory.h>
 
 #include "network/ip_addr.h"
 #include "network/udp_socket.h"
@@ -22,7 +23,7 @@ void tcp_test() {
         std::cout << "Could not create Socket!" << std::endl;
         return;
     }
-    network::tcp_connection<network::ipv4_addr>* new_connection;
+    std::shared_ptr<network::tcp_connection<network::ipv4_addr>> new_connection;
 
     new_connection = socket_in.acceptConnection();
     if (new_connection != nullptr) {
@@ -35,9 +36,6 @@ void tcp_test() {
         std::string msg = "HTTP-Version: HTTP/1.0 200 OK\nContent-Length: 0\nContent-Type: text/html\n<blank line>\n<body>";
       
         new_connection->sendData<char>(msg.data(), msg.size());
-        
-                
-        delete new_connection;
     }
 
 }
