@@ -2,6 +2,8 @@
 #define pkt_buffer_h
 
 #include <iostream>
+#include <string>
+#include <cstring>
 #include <vector>
 #include <stdint.h>
 #include "network/ip_addr.h"
@@ -20,7 +22,7 @@ namespace network {
         // Parameter:
         // - bufferCapacity: init buffer-capacity
         //______________________________________________________________________________________________________
-        pkt_buffer(int bufferCapacity) : msgBuffer_(bufferCapacity), msgLen_(0), objCastIndex_(0) {
+        pkt_buffer(int bufferCapacity) : m_msgBuffer(bufferCapacity), m_msgLength(0), m_objCastIndex(0) {
 
         }
         //______________________________________________________________________________________________________
@@ -38,15 +40,15 @@ namespace network {
         // - null-pointer | if no instance is available
         //______________________________________________________________________________________________________
         template <typename CAST_TYPE>
-        CAST_TYPE* getNext(const int n = 1) {
+        CAST_TYPE* get_next(const int n = 1) {
             CAST_TYPE* result = nullptr;
 
             // if the next object is still inside the valid-buffer
-            if (objCastIndex_ + sizeof(CAST_TYPE)*n <= msgLen_) {
+            if (m_objCastIndex + sizeof(CAST_TYPE)*n <= m_msgLength) {
                 // create pointer to simulated instance
-                result = (CAST_TYPE*)(msgBuffer_.data() + objCastIndex_);
+                result = (CAST_TYPE*)(m_msgBuffer.data() + m_objCastIndex);
                 // increase offset by the size of the simulated instance
-                objCastIndex_ += sizeof(CAST_TYPE) * n;
+                m_objCastIndex += sizeof(CAST_TYPE) * n;
 
             }
 
@@ -66,18 +68,18 @@ namespace network {
         // - null-pointer | if no instance is available
         //______________________________________________________________________________________________________
         template <typename CAST_TYPE>
-        CAST_TYPE* pushNext(const int n = 1) {
+        CAST_TYPE* push_next(const int n = 1) {
             CAST_TYPE* result = nullptr;
 
             // if the next object is still inside the buffer
-            if (objCastIndex_ + sizeof(CAST_TYPE)*n <= msgBuffer_.size()) {
+            if (m_objCastIndex + sizeof(CAST_TYPE)*n <= m_msgBuffer.size()) {
                 // create pointer to simulated instance
-                result = (CAST_TYPE*)(msgBuffer_.data() + objCastIndex_);
+                result = (CAST_TYPE*)(m_msgBuffer.data() + m_objCastIndex);
                 // increase offset by the size of the simulated instance
-                objCastIndex_ += sizeof(CAST_TYPE) * n;
+                m_objCastIndex += sizeof(CAST_TYPE) * n;
 
-                if (msgLen_ < objCastIndex_) {
-                    msgLen_ = objCastIndex_;
+                if (m_msgLength < m_objCastIndex) {
+                    m_msgLength = m_objCastIndex;
                 }
 
                 memset(result, 0, sizeof(CAST_TYPE)*n);
@@ -88,10 +90,28 @@ namespace network {
         //______________________________________________________________________________________________________
         //
         // Description:
+        // - pushes a std::string in the buffer
+        // Return:
+        // - true  | on success
+        // - false | on error
+        //______________________________________________________________________________________________________
+        bool push_string(const std::string& input) {
+            char* dest = push_next<char>(input.length());
+            
+            if (dest != nullptr) {
+                std::strncpy(dest, input.c_str(),  input.length());
+                return true;
+            }
+
+            return false;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
         // - resets the offset/index from castNext
         //______________________________________________________________________________________________________
         void reset() {
-            objCastIndex_ = 0;
+            m_objCastIndex = 0;
         }
         //______________________________________________________________________________________________________
         //
@@ -99,15 +119,23 @@ namespace network {
         // - pointer to the internal buffer
         //______________________________________________________________________________________________________
         int8_t* data() {
-            return msgBuffer_.data();
+            return m_msgBuffer.data();
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Return:
+        // - pointer to the remaining internal buffer
+        //______________________________________________________________________________________________________
+        int8_t* remaining_data() {
+            return m_msgBuffer.data() + m_msgLength;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - pointer to the current position in the internal buffer
         //______________________________________________________________________________________________________
-        int8_t* dataOffset() {
-            return msgBuffer_.data() + objCastIndex_;
+        int8_t* data_offset() {
+            return m_msgBuffer.data() + m_objCastIndex;
         }
         //______________________________________________________________________________________________________
         //
@@ -115,7 +143,7 @@ namespace network {
         // - current buffer-capacity
         //______________________________________________________________________________________________________
         size_t capacity() const {
-            return msgBuffer_.size();
+            return m_msgBuffer.size();
         }
         //______________________________________________________________________________________________________
         //
@@ -125,25 +153,33 @@ namespace network {
         // - size: new size of the buffer
         //______________________________________________________________________________________________________
         void resize(int size) {
-            msgBuffer_.resize(size);
-            msgLen_ = 0;
-            objCastIndex_ = 0;
+            m_msgBuffer.resize(size);
+            m_msgLength = 0;
+            m_objCastIndex = 0;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - current message-length
         //______________________________________________________________________________________________________
-        size_t msgLen() const {
-            return msgLen_;
+        size_t msg_length() const {
+            return m_msgLength;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - remaining message-length
         //______________________________________________________________________________________________________
-        size_t remainingMsgLen() const {
-            return msgLen_ - objCastIndex_;
+        size_t remaining_msg_length() const {
+            return m_msgLength - m_objCastIndex;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Return:
+        // - remaining capacity
+        //______________________________________________________________________________________________________
+        size_t remaining_capacity() const {
+            return m_msgBuffer.size() - m_msgLength;
         }
         //______________________________________________________________________________________________________
         //
@@ -153,13 +189,13 @@ namespace network {
         // Parameter:
         // - len: new length | needs to be smaller than the capacity
         //______________________________________________________________________________________________________
-        void setMsgLen(int len) {
-            if (len < 0) {
-                len = 0;
+        void set_msg_length(int length) {
+            if (length < 0) {
+                length = 0;
             }
 
-            msgLen_ = len;
-            objCastIndex_ = 0;
+            m_msgLength = length;
+            m_objCastIndex = 0;
         }
         //______________________________________________________________________________________________________
         //
@@ -170,21 +206,21 @@ namespace network {
         // Parameter:
         // - len: new length | needs to be smaller than the capacity
         //______________________________________________________________________________________________________
-        void reserveLen(int len) {
-            if (len < 0) {
-                len = 0;
+        void reserve_length(int length) {
+            if (length < 0) {
+                length = 0;
             }
 
-            msgLen_ = len;
-            objCastIndex_ = len;
+            m_msgLength = length;
+            m_objCastIndex = length;
         }
     private:
         // internal buffer for network-IO
-        std::vector<int8_t> msgBuffer_;
+        std::vector<int8_t> m_msgBuffer;
         // len of the real message
-        int msgLen_;
+        int m_msgLength;
         // address-offset to the next posible object
-        int objCastIndex_;
+        int m_objCastIndex;
     };
 }
 

@@ -13,24 +13,52 @@ namespace network {
     class base_socket {
     public:
         base_socket() {
-            skt_ = 0;
+            m_skt = 0;
         }
         base_socket(base_socket& conn) = delete;
+        base_socket(base_socket&& conn) {
+            m_skt = conn.m_skt;
+            conn.m_skt = 0;
+            
+            m_addr = conn.m_addr;
+        }
+        base_socket& operator=(base_socket&& conn) {            
+            if (!is_closed()) {
+                close_socket();
+            }
+            
+            m_skt = conn.m_skt;
+            conn.m_skt = 0;
+            
+            m_addr = conn.m_addr;
+            
+            return *this;
+        }
         //______________________________________________________________________________________________________
         //
         // Description:
         // - closes the socket
         //______________________________________________________________________________________________________
         ~base_socket() {
-            closeSocket();
+            if (!is_closed()) {
+                close_socket();
+            }
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - address of the socket
         //______________________________________________________________________________________________________
-        IP_ADDR_TYPE& getAddr() {
-            return addr_;
+        IP_ADDR_TYPE& get_addr() {
+            return m_addr;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Return:
+        // - const address of the socket
+        //______________________________________________________________________________________________________
+        const IP_ADDR_TYPE& get_addr() const {
+            return m_addr;
         }
         //______________________________________________________________________________________________________
         //
@@ -39,13 +67,13 @@ namespace network {
         // Parameter:
         // - sec: maximal number of seconds any blocking-call will wait
         //______________________________________________________________________________________________________
-        void setTimeout(const float sec) const {
+        void set_timeout(const float sec) const {
             struct timeval tv;
             tv.tv_sec = (int)sec;
             tv.tv_usec = (1000000.0 * sec);
             tv.tv_usec = tv.tv_usec % 1000000;
-            setsockopt(skt_, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
-            setsockopt(skt_, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
+            setsockopt(m_skt, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
+            setsockopt(m_skt, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
         }
         //______________________________________________________________________________________________________
         //
@@ -54,8 +82,8 @@ namespace network {
         // Parameter:
         // - skt: any socket (accordingly to the child-class)
         //______________________________________________________________________________________________________
-        void setSocket(int skt) {
-            skt_ = skt;
+        void set_socket(const int skt) {
+            m_skt = skt;
         }
         //______________________________________________________________________________________________________
         //
@@ -66,9 +94,9 @@ namespace network {
         // - true: the socket could closed succesfully or was already closed
         // - false: on any error
         //______________________________________________________________________________________________________
-        bool closeSocket() {
-            int tmp = skt_;
-            skt_ = 0;
+        bool close_socket() {
+            int tmp = m_skt;
+            m_skt = 0;
 
             return close(tmp) == 0;
         }
@@ -77,38 +105,38 @@ namespace network {
         // Return:
         // - current close-state
         //______________________________________________________________________________________________________
-        bool isClosed() const {
-            return skt_ == 0;
+        bool is_closed() const {
+            return m_skt == 0;
         }
         //______________________________________________________________________________________________________
         //
         // Description:
         // - see man shutdown()
         //______________________________________________________________________________________________________
-        void shutRD() const {
-            shutdown(skt_, SHUT_RD);
+        void shut_RD() const {
+            shutdown(m_skt, SHUT_RD);
         }
         //______________________________________________________________________________________________________
         //
         // Description:
         // - see man shutdown()
         //______________________________________________________________________________________________________
-        void shutWR() const {
-            shutdown(skt_, SHUT_WR);
+        void shut_WR() const {
+            shutdown(m_skt, SHUT_WR);
         }
         //______________________________________________________________________________________________________
         //
         // Description:
         // - see man shutdown()
         //______________________________________________________________________________________________________
-        void shutRDWR() const {
-            shutdown(skt_, SHUT_RDWR);
+        void shut_RDWR() const {
+            shutdown(m_skt, SHUT_RDWR);
         }
     protected:
         // socket-descriptor
-        int skt_;
+        int m_skt;
         // address of the socket
-        IP_ADDR_TYPE addr_;
+        IP_ADDR_TYPE m_addr;
     };
 }
 

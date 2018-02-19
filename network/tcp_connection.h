@@ -3,6 +3,7 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <cstring>
 #include "ip_addr.h"
 #include "base_socket.h"
 #include "pkt_buffer.h"
@@ -19,6 +20,14 @@ namespace network {
 
         }
         tcp_connection(const tcp_connection& that) = delete;
+        tcp_connection(tcp_connection&& conn) : base_socket<IP_ADDR_TYPE>(std::move(conn)) {
+
+        }
+        tcp_connection& operator=(tcp_connection && conn) {
+            base_socket<IP_ADDR_TYPE>::operator=(std::move(conn));
+
+            return *this;
+        }
         //______________________________________________________________________________________________________
         //
         // Description:
@@ -37,17 +46,17 @@ namespace network {
         // - true  | on success
         // - false | on error
         //______________________________________________________________________________________________________
-        bool connectTo(const IP_ADDR_TYPE& addr) {
-            this->addr_ = addr;
+        bool connect_to(const IP_ADDR_TYPE& addr) {
+            this->m_addr = addr;
 
             // create new socket
-            this->skt_ = socket(this->addr_.getFamily(), SOCK_STREAM, 0);
+            this->m_skt = socket(this->m_addr.family(), SOCK_STREAM, 0);
 
-            if (this->skt_ == -1) {
+            if (this->m_skt == -1) {
                 return false;
             }
 
-            if (connect(this->skt_, (struct sockaddr*) this->addr_.getSockaddr_in(), sizeof(*(this->addr_.getSockaddr_in()))) != 0) {
+            if (connect(this->m_skt, (struct sockaddr*) this->m_addr.internal_handle(), sizeof(*(this->m_addr.internal_handle()))) != 0) {
                 return false;
             }
 
@@ -66,8 +75,8 @@ namespace network {
         // - size of successfully send data
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t sendData(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
-            return send(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+        ssize_t send_data(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
+            return send(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
         }
         //______________________________________________________________________________________________________
         //
@@ -81,8 +90,8 @@ namespace network {
         // - size of successfully received data
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t recvData(MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
-            return recv(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+        ssize_t recv_data(MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
+            return recv(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
         }
         //______________________________________________________________________________________________________
         //
@@ -94,8 +103,8 @@ namespace network {
         // Return:
         // - size of successfully send data
         //______________________________________________________________________________________________________
-        ssize_t sendPkt(pkt_buffer& buffer, const int flags = 0) const {
-            return send(this->skt_, buffer.data(), buffer.msgLen(), flags);
+        ssize_t send_pkt(pkt_buffer& buffer, const int flags = 0) const {
+            return send(this->m_skt, buffer.data(), buffer.msg_length(), flags);
         }
         //______________________________________________________________________________________________________
         //
@@ -106,10 +115,19 @@ namespace network {
         // - flags: see 'man recv()'
         // Return:
         // - size of successfully received data
+        // - -1 on any error
         //______________________________________________________________________________________________________
-        ssize_t recvPkt(pkt_buffer& buffer, const int flags = 0) const {
-            buffer.setMsgLen(recv(this->skt_, buffer.data(), buffer.capacity(), flags));
-            return buffer.msgLen();
+        int recv_pkt(pkt_buffer& buffer, const int flags = 0) const {
+            int result = recv(this->m_skt, buffer.data(), buffer.capacity(), flags);
+
+            if (result < 1) {
+                buffer.set_msg_length(0);
+                result = ((errno == EAGAIN) & (result == -1)) - 1;
+            } else {
+                buffer.set_msg_length(result);
+            }
+
+            return result;
         }
     };
 }

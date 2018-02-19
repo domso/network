@@ -33,18 +33,27 @@ namespace network {
         // - creates a new udp socket and bind it to port
         // Parameter:
         // - port: application-port for the udp-protocol on which the new socket will be binded
+        // - blocking: set the SOCK_NONBLOCK option if false
         // Return:
         // - true  | on success
         // - false | on any error
         //______________________________________________________________________________________________________
-        bool init(const uint16_t port) {
+        bool init(const uint16_t port, const bool blocking = true) {
             // initialize the socket address
-            this->addr_.init("", port);
+            this->m_addr.init("", port);
 
             // create new socket
-            if ((this->skt_ = socket(this->addr_.getFamily(), SOCK_DGRAM, IPPROTO_UDP)) != -1) {
+            int type = SOCK_DGRAM;
+            
+            if (!blocking) {
+                type |= SOCK_NONBLOCK;
+            }
+            
+            if ((this->m_skt = socket(this->m_addr.family(), type, IPPROTO_UDP)) != -1) {
                 // bind the socket to the address
-                return bind(this->skt_, (sockaddr*)this->addr_.getSockaddr_in(), sizeof(*this->addr_.getSockaddr_in())) != -1;
+                unsigned int size = sizeof(*(this->m_addr.internal_handle()));
+                return bind(this->m_skt, (sockaddr*)this->m_addr.internal_handle(), sizeof(*this->m_addr.internal_handle())) != -1
+                    && getsockname(this->m_skt, (struct sockaddr*) this->m_addr.internal_handle(), &size) != -1;                
             }
 
             return false;
@@ -63,8 +72,8 @@ namespace network {
         // - -1 on any error
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t sendData(const IP_ADDR_TYPE& dest, const MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
-            return sendto(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in())) / sizeof(MSG_DATA_TYPE);
+        ssize_t send_data(const IP_ADDR_TYPE& dest, const MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
+            return sendto(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle())) / sizeof(MSG_DATA_TYPE);
         }
         //______________________________________________________________________________________________________
         //
@@ -80,9 +89,9 @@ namespace network {
         // - -1 on any error
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t recvData(IP_ADDR_TYPE& src, MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
-            socklen_t address_len = sizeof(*src.getSockaddr_in());
-            return recvfrom(this->skt_, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.getSockaddr_in(), &address_len) / sizeof(MSG_DATA_TYPE);
+        ssize_t recv_data(IP_ADDR_TYPE& src, MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
+            socklen_t address_len = sizeof(*src.internal_handle());
+            return recvfrom(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.internal_handle(), &address_len) / sizeof(MSG_DATA_TYPE);
         }
         //______________________________________________________________________________________________________
         //
@@ -96,8 +105,8 @@ namespace network {
         // - size of successfully send data
         // - -1 on any error
         //______________________________________________________________________________________________________
-        size_t sendPkt(IP_ADDR_TYPE& dest, pkt_buffer& buffer, const int flags = 0) const {
-            return sendto(this->skt_, buffer.data(), buffer.msgLen(), flags, (sockaddr*) dest.getSockaddr_in(), sizeof(*dest.getSockaddr_in()));
+        size_t send_pkt(IP_ADDR_TYPE& dest, pkt_buffer& buffer, const int flags = 0) const {
+            return sendto(this->m_skt, buffer.data(), buffer.msg_length(), flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle()));
         }
         //______________________________________________________________________________________________________
         //
@@ -111,15 +120,15 @@ namespace network {
         // - size of successfully received data
         // - -1 on any error
         //______________________________________________________________________________________________________
-        ssize_t recvPkt(IP_ADDR_TYPE& src, pkt_buffer& buffer, const int flags = 0) const {
-            socklen_t address_len = sizeof(*src.getSockaddr_in());
-            int result = recvfrom(this->skt_, buffer.data(), buffer.capacity(), flags, (sockaddr*) src.getSockaddr_in(), &address_len);;
+        ssize_t recv_pkt(IP_ADDR_TYPE& src, pkt_buffer& buffer, const int flags = 0) const {
+            socklen_t address_len = sizeof(*src.internal_handle());
+            int result = recvfrom(this->m_skt, buffer.data(), buffer.capacity(), flags, (sockaddr*) src.internal_handle(), &address_len);;
 
             if (result < 1) {
-                buffer.setMsgLen(0);
+                buffer.set_msg_length(0);
                 result = ((errno == EAGAIN) & (result == -1)) - 1;
             } else {
-                buffer.setMsgLen(result);
+                buffer.set_msg_length(result);
             }
 
             return result;

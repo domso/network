@@ -29,19 +29,19 @@ namespace network {
         // Return:
         // - port-number
         //______________________________________________________________________________________________________
-        virtual uint16_t getPort() const = 0;
+        virtual uint16_t port() const = 0;
         //______________________________________________________________________________________________________
         //
         // Return:
         // - IP in the standardized textform
         //______________________________________________________________________________________________________
-        virtual const std::string getIP() const = 0;
+        virtual const std::string ip() const = 0;
         //______________________________________________________________________________________________________
         //
         // Return:
         // - socket family AF_INET/AF_INET6
         //______________________________________________________________________________________________________
-        virtual int getFamily() const = 0;
+        virtual int family() const = 0;
     };
     //______________________________________________________________________________________________________
     //
@@ -55,13 +55,13 @@ namespace network {
         // - sets ip and port-number
         //______________________________________________________________________________________________________
         bool init(const std::string ip, const uint16_t port) {
-            memset((char*) &network_addr_v4_, 0, sizeof(network_addr_v4_));
+            memset((char*) &m_network_addr_v4, 0, sizeof(m_network_addr_v4));
 
-            network_addr_v4_.sin_family = AF_INET;
-            network_addr_v4_.sin_port = htons(port);
-            network_addr_v4_.sin_addr.s_addr = htonl(INADDR_ANY);
+            m_network_addr_v4.sin_family = AF_INET;
+            m_network_addr_v4.sin_port = htons(port);
+            m_network_addr_v4.sin_addr.s_addr = htonl(INADDR_ANY);
 
-            if (ip != "" && inet_pton(AF_INET, ip.c_str() , &network_addr_v4_.sin_addr) == 1) {
+            if (ip != "" && inet_pton(AF_INET, ip.c_str() , &m_network_addr_v4.sin_addr) == 1) {
                 return true;
             }
 
@@ -72,17 +72,17 @@ namespace network {
         // Return:
         // - port-number
         //______________________________________________________________________________________________________
-        uint16_t getPort() const {
-            return htons(network_addr_v4_.sin_port);
+        uint16_t port() const {
+            return htons(m_network_addr_v4.sin_port);
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - IP in the standardized textform
         //______________________________________________________________________________________________________
-        const std::string getIP() const {
+        const std::string ip() const {
              char buffer_v4[INET_ADDRSTRLEN];
-             inet_ntop(AF_INET, &network_addr_v4_.sin_addr, buffer_v4, INET_ADDRSTRLEN);
+             inet_ntop(AF_INET, &m_network_addr_v4.sin_addr, buffer_v4, INET_ADDRSTRLEN);
              std::string tmp_v4(buffer_v4);
              return tmp_v4;
         }
@@ -91,20 +91,20 @@ namespace network {
         // Return:
         // - the internal data
         //______________________________________________________________________________________________________
-        const sockaddr_in* getSockaddr_in() const {
-            return &network_addr_v4_;
+        const sockaddr_in* internal_handle() const {
+            return &m_network_addr_v4;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - socket family AF_INET/AF_INET6
         //______________________________________________________________________________________________________
-        int getFamily() const {
+        int family() const {
             return AF_INET;
         }
     protected:
         // internal data
-        sockaddr_in network_addr_v4_;
+        struct sockaddr_in m_network_addr_v4;
     };
     //______________________________________________________________________________________________________
     //
@@ -118,13 +118,13 @@ namespace network {
         // - sets ip and port-number
         //______________________________________________________________________________________________________
         bool init(const std::string ip, const uint16_t port) {
-            memset((char*) &network_addr_v6_, 0, sizeof(network_addr_v6_));
+            memset((char*) &m_network_addr_v6, 0, sizeof(m_network_addr_v6));
 
-            network_addr_v6_.sin6_family = AF_INET6;
-            network_addr_v6_.sin6_port = htons(port);
-            network_addr_v6_.sin6_addr = in6addr_any;
+            m_network_addr_v6.sin6_family = AF_INET6;
+            m_network_addr_v6.sin6_port = htons(port);
+            m_network_addr_v6.sin6_addr = in6addr_any;
 
-            if (ip != "" && inet_pton(AF_INET6, ip.c_str() , &network_addr_v6_.sin6_addr) == 1) {
+            if (ip != "" && inet_pton(AF_INET6, ip.c_str() , &m_network_addr_v6.sin6_addr) == 1) {
                 return true;
             }
 
@@ -135,17 +135,17 @@ namespace network {
         // Return:
         // - port-number
         //______________________________________________________________________________________________________
-        uint16_t getPort() const {
-            return network_addr_v6_.sin6_port;
+        uint16_t port() const {
+            return m_network_addr_v6.sin6_port;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - IP in the standardized textform
         //______________________________________________________________________________________________________
-        const std::string getIP() const {
+        const std::string ip() const {
             char buffer_v6[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &network_addr_v6_.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, &m_network_addr_v6.sin6_addr, buffer_v6, INET6_ADDRSTRLEN);
             std::string tmp_v6(buffer_v6);
             return tmp_v6;
         }
@@ -153,20 +153,20 @@ namespace network {
         //
         // returns the internal data
         //______________________________________________________________________________________________________
-        const sockaddr_in6* getSockaddr_in() const {
-            return &network_addr_v6_;
+        const sockaddr_in6* sockaddr_in() const {
+            return &m_network_addr_v6;
         }
         //______________________________________________________________________________________________________
         //
         // Return:
         // - socket family AF_INET/AF_INET6
         //______________________________________________________________________________________________________
-        int getFamily() const {
+        int family() const {
             return AF_INET6;
         }
     protected:
         // internal data
-        sockaddr_in6 network_addr_v6_;
+        sockaddr_in6 m_network_addr_v6;
     };
 }
 

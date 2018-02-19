@@ -39,7 +39,7 @@ void server() {
 		}
 	}
 
-	while (!socket.closeSocket()) {}
+	while (!socket.close_socket()) {}
 
 }
 
