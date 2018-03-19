@@ -41,6 +41,7 @@ namespace network {
         //______________________________________________________________________________________________________
         template <typename CAST_TYPE>
         CAST_TYPE* get_next(const int n = 1) {
+            static_assert(std::is_trivially_copyable<CAST_TYPE>::value);
             CAST_TYPE* result = nullptr;
 
             // if the next object is still inside the valid-buffer
@@ -69,6 +70,7 @@ namespace network {
         //______________________________________________________________________________________________________
         template <typename CAST_TYPE>
         CAST_TYPE* push_next(const int n = 1) {
+            static_assert(std::is_trivially_copyable<CAST_TYPE>::value);
             CAST_TYPE* result = nullptr;
 
             // if the next object is still inside the buffer
@@ -112,6 +114,14 @@ namespace network {
         //______________________________________________________________________________________________________
         void reset() {
             m_objCastIndex = 0;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
+        // - same as set_msg_length(0)
+        //______________________________________________________________________________________________________
+        void clear() {
+            set_msg_length(0);
         }
         //______________________________________________________________________________________________________
         //
@@ -214,6 +224,25 @@ namespace network {
             m_msgLength = length;
             m_objCastIndex = length;
         }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
+        // - prints the content of the buffer in byte-wise hex
+        //______________________________________________________________________________________________________
+        void print() {
+            std::cout << std::hex << "| ";
+            for (int i = 0; i < m_msgLength; i++) {
+                std::cout << (int)m_msgBuffer[i];
+                if (((i + 1) & 3) == 0) {
+                    std::cout << " ";
+                }
+                if (((i + 1) & 7) == 0) {
+                    std::cout << "| ";
+                }
+            }
+            
+            std::cout << std::dec << std::endl;
+        }        
     private:
         // internal buffer for network-IO
         std::vector<int8_t> m_msgBuffer;

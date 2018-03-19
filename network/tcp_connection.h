@@ -3,6 +3,7 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <errno.h>
 #include <cstring>
 #include "ip_addr.h"
 #include "base_socket.h"
@@ -72,11 +73,13 @@ namespace network {
         // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
         // - flags: see 'man send()'
         // Return:
-        // - size of successfully send data
+        // - <success, errno>
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t send_data(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
-            return send(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+        std::pair<bool, int> send_data(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = MSG_NOSIGNAL) const {
+            static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
+            int result = send(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+            return this->check_error(result);
         }
         //______________________________________________________________________________________________________
         //
@@ -87,11 +90,13 @@ namespace network {
         // - numberOfData: number of instances of MSG_DATA_TYPE | 1 on default
         // - flags: see 'man recv()'
         // Return:
-        // - size of successfully received data
+        // - <success, errno>
         //______________________________________________________________________________________________________
         template <typename MSG_DATA_TYPE>
-        ssize_t recv_data(MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
-            return recv(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+        std::pair<bool, int> recv_data(MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
+            static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
+            int result = recv(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+            return this->check_error(result);
         }
         //______________________________________________________________________________________________________
         //
@@ -101,10 +106,11 @@ namespace network {
         // - buffer: reference to a pkt_buffer with a msgLen > 0
         // - flags: see 'man send()'
         // Return:
-        // - size of successfully send data
+        // - <success, errno>
         //______________________________________________________________________________________________________
-        ssize_t send_pkt(pkt_buffer& buffer, const int flags = 0) const {
-            return send(this->m_skt, buffer.data(), buffer.msg_length(), flags);
+        std::pair<bool, int> send_pkt(pkt_buffer& buffer, const int flags = MSG_NOSIGNAL) const {
+            int result = send(this->m_skt, buffer.data(), buffer.msg_length(), flags);
+            return this->check_error(result);
         }
         //______________________________________________________________________________________________________
         //
@@ -114,20 +120,18 @@ namespace network {
         // - buffer: reference to a pkt_buffer
         // - flags: see 'man recv()'
         // Return:
-        // - size of successfully received data
-        // - -1 on any error
+        // - <success, errno>
         //______________________________________________________________________________________________________
-        int recv_pkt(pkt_buffer& buffer, const int flags = 0) const {
+        std::pair<bool, int> recv_pkt(pkt_buffer& buffer, const int flags = 0) const {
             int result = recv(this->m_skt, buffer.data(), buffer.capacity(), flags);
 
             if (result < 1) {
                 buffer.set_msg_length(0);
-                result = ((errno == EAGAIN) & (result == -1)) - 1;
             } else {
                 buffer.set_msg_length(result);
             }
 
-            return result;
+            return this->check_error(result);
         }
     };
 }

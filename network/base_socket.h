@@ -88,6 +88,14 @@ namespace network {
         //______________________________________________________________________________________________________
         //
         // Description:
+        // - gets current socket
+        //______________________________________________________________________________________________________
+        int get_socket() {
+            return m_skt;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
         // - tries to close the socket
         // - see man 'close' for more information
         // Return:
@@ -132,7 +140,22 @@ namespace network {
         void shut_RDWR() const {
             shutdown(m_skt, SHUT_RDWR);
         }
-    protected:
+    protected:  
+        //______________________________________________________________________________________________________
+        //
+        // Description:
+        // - if the given argument is -1, returns errno, otherwise returns zero
+        //______________________________________________________________________________________________________
+        std::pair<bool, int> check_error(int result) const {
+            if (result == -1) {
+                return std::make_pair(false, errno);
+            } else if (result == 0) {
+                return std::make_pair(false, 0);
+            } else {
+                return std::make_pair(true, result);
+            }
+        }
+        
         // socket-descriptor
         int m_skt;
         // address of the socket
