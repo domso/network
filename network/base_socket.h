@@ -148,7 +148,7 @@ namespace network {
         //______________________________________________________________________________________________________
         std::pair<bool, int> check_error(int result) const {
             if (result == -1) {
-                return std::make_pair(false, errno);
+                return std::make_pair((errno == EAGAIN || errno == EWOULDBLOCK), errno);
             } else if (result == 0) {
                 return std::make_pair(false, 0);
             } else {

@@ -110,6 +110,43 @@ namespace network {
         //______________________________________________________________________________________________________
         //
         // Description:
+        // - pushes a buffer in the buffer
+        // Return:
+        // - true  | on success
+        // - false | on error
+        //______________________________________________________________________________________________________
+        bool push_buffer(pkt_buffer& input) {
+            char* dest = push_next<char>(input.msg_length());
+            
+            if (dest != nullptr) {
+                std::strncpy(dest, (char*)input.data(),  input.msg_length());
+                return true;
+            }
+
+            return false;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
+        // - pushes a vector in the buffer
+        // Return:
+        // - true  | on success
+        // - false | on error
+        //______________________________________________________________________________________________________
+        template <typename T>
+        bool push_vector(std::vector<T>& input) {
+            char* dest = push_next<T>(input.size());
+            
+            if (dest != nullptr) {
+                std::strncpy(dest, (char*)input.data(),  input.size() * sizeof(T));
+                return true;
+            }
+
+            return false;
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Description:
         // - resets the offset/index from castNext
         //______________________________________________________________________________________________________
         void reset() {
@@ -129,6 +166,14 @@ namespace network {
         // - pointer to the internal buffer
         //______________________________________________________________________________________________________
         int8_t* data() {
+            return m_msgBuffer.data();
+        }
+        //______________________________________________________________________________________________________
+        //
+        // Return:
+        // - pointer to the internal buffer
+        //______________________________________________________________________________________________________
+        const int8_t* data() const {
             return m_msgBuffer.data();
         }
         //______________________________________________________________________________________________________

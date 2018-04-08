@@ -124,7 +124,6 @@ namespace network {
         //______________________________________________________________________________________________________
         std::pair<bool, int> recv_pkt(pkt_buffer& buffer, const int flags = 0) const {
             int result = recv(this->m_skt, buffer.data(), buffer.capacity(), flags);
-
             if (result < 1) {
                 buffer.set_msg_length(0);
             } else {
