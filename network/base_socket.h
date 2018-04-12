@@ -5,10 +5,10 @@
 #include "ip_addr.h"
 
 namespace network {
-    //______________________________________________________________________________________________________
-    //
-    // base class for general socket (UDP or TCP)
-    //______________________________________________________________________________________________________
+    /**
+    * @brief base class for general socket (UDP or TCP)
+    * 
+    */
     template<typename IP_ADDR_TYPE>
     class base_socket {
     public:
@@ -34,39 +34,40 @@ namespace network {
             
             return *this;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - closes the socket
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief closes the socket
+        * 
+        */
         ~base_socket() {
             if (!is_closed()) {
                 close_socket();
             }
         }
-        //______________________________________________________________________________________________________
-        //
-        // Return:
-        // - address of the socket
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief address of the socket
+        * 
+        * @return IP_ADDR_TYPE&
+        */
         IP_ADDR_TYPE& get_addr() {
             return m_addr;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Return:
-        // - const address of the socket
-        //______________________________________________________________________________________________________
+        
+        /**
+         * @brief IP-address of the socket
+         * 
+         * @return const IP_ADDR_TYPE&
+         */
         const IP_ADDR_TYPE& get_addr() const {
             return m_addr;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - sets timeout for blocking calls (recv,send)
-        // Parameter:
-        // - sec: maximal number of seconds any blocking-call will wait
-        //______________________________________________________________________________________________________
+        
+        /**
+         * @brief sets timeout for blocking calls (recv, send)
+         * 
+         * @param sec timeout in seconds
+         */
         void set_timeout(const float sec) const {
             struct timeval tv;
             tv.tv_sec = (int)sec;
@@ -75,60 +76,54 @@ namespace network {
             setsockopt(m_skt, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
             setsockopt(m_skt, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - sets new socket
-        // Parameter:
-        // - skt: any socket (accordingly to the child-class)
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief sets new socket
+        * 
+        * @param skt: any socket (accordingly to the derived-class)
+        */
         void set_socket(const int skt) {
             m_skt = skt;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - tries to close the socket
-        // - see man 'close' for more information
-        // Return:
-        // - true: the socket could closed succesfully or was already closed
-        // - false: on any error
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief 
+        * - tries to close the socket
+        * - see man 'close' for more information
+        * 
+        * @return bool: success
+        */
         bool close_socket() {
             int tmp = m_skt;
             m_skt = 0;
 
             return close(tmp) == 0;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Return:
-        // - current close-state
-        //______________________________________________________________________________________________________
+                
+        /**
+        * @brief current close-state
+        */
         bool is_closed() const {
             return m_skt == 0;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - see man shutdown()
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief see man shutdown()
+        */
         void shut_RD() const {
             shutdown(m_skt, SHUT_RD);
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - see man shutdown()
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief see man shutdown()
+        */
         void shut_WR() const {
             shutdown(m_skt, SHUT_WR);
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - see man shutdown()
-        //______________________________________________________________________________________________________
+                        
+        /**
+        * @brief see man shutdown()
+        */
         void shut_RDWR() const {
             shutdown(m_skt, SHUT_RDWR);
         }
