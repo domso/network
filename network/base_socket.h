@@ -87,6 +87,13 @@ namespace network {
         }
         
         /**
+        * @brief gets current socket
+        */
+        int get_socket() {
+            return m_skt;
+        }
+        
+        /**
         * @brief 
         * - tries to close the socket
         * - see man 'close' for more information
@@ -127,7 +134,23 @@ namespace network {
         void shut_RDWR() const {
             shutdown(m_skt, SHUT_RDWR);
         }
-    protected:
+    protected:        
+        /**
+        * @brief checks errno, if result = -1
+        * 
+        * @param result return-value from any posix-socket call
+        * @return {noError, errono}
+        */
+        std::pair<bool, int> check_error(int result) const {
+            if (result == -1) {
+                return std::make_pair((errno == EAGAIN || errno == EWOULDBLOCK), errno);
+            } else if (result == 0) {
+                return std::make_pair(false, 0);
+            } else {
+                return std::make_pair(true, result);
+            }
+        }
+        
         // socket-descriptor
         int m_skt;
         // address of the socket

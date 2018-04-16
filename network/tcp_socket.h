@@ -10,12 +10,11 @@
 #include "base_socket.h"
 #include "tcp_connection.h"
 
-
 namespace network {
-    //______________________________________________________________________________________________________
-    //
-    // A wrapper for the classical tcp-accept-sockets
-    //______________________________________________________________________________________________________
+    /**
+    * @brief A wrapper for the posix accept-functions of the posix-tcp-sockets
+    * 
+    */
     template<typename IP_ADDR_TYPE>
     class tcp_socket : public network::base_socket<IP_ADDR_TYPE> {
     public:
@@ -23,28 +22,23 @@ namespace network {
 
         }
         tcp_socket(const tcp_socket& that) = delete;
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - closes the socket
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief closes the socket
+        * 
+        */
         ~tcp_socket() {
 
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - initializes a new tcp-socket
-        // - binds the socket on an port
-        // - starts listening for new connections
-        // Parameters:
-        // - port: the port on which the socket will be binded
-        // - backlog: maximal number of pending connections
-        // - blocking: set the SOCK_NONBLOCK options for the socket
-        // Return:
-        // - true  | on success
-        // - false | on any error
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief initializes a new tcp-socket, binds this socket to the given port and start listing for incoming connections
+        * 
+        * @param port port for accepting new connections
+        * @param backlog max number of pending connections
+        * @param blocking enable/disable blocking-calls
+        * @return success
+        */
         bool accept_on(const uint16_t port, const int backlog, const bool blocking = true) {
             // initialize the socket address
             this->m_addr.init("", port);
@@ -77,15 +71,12 @@ namespace network {
             // start listening for new incoming connections
             return listen(this->m_skt, backlog) == 0;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - accepts new connections on the socket
-        // - creates a new tcp_connection-object with the accepted socket
-        // Return:
-        // - smart-ptr to a new tcp_connection instance
-        // - smart-ptr containing nullptr
-        //_____________________________________________________________________________________________________
+        
+        /**
+        * @brief accepts new connections on the socket and creates a new tcp_connection-object
+        * 
+        * @return nullptr for any error
+        */
         std::shared_ptr<network::tcp_connection<IP_ADDR_TYPE>> accept_connection() const {
             // create object for new connection
             std::shared_ptr<network::tcp_connection<IP_ADDR_TYPE>> connection = std::make_shared<network::tcp_connection<IP_ADDR_TYPE>>();
@@ -103,15 +94,13 @@ namespace network {
 
             return connection;
         }
-        //______________________________________________________________________________________________________
-        //
-        // Description:
-        // - accepts new connections on the socket
-        // Parameter:
-        // - connection: a valid noninitialized instance of tcp_connection in which the connection will be stored
-        // Return:
-        // - true if no error occured
-        //______________________________________________________________________________________________________
+        
+        /**
+        * @brief accepts new connections on the socket and emplace the socket in the given argument
+        * 
+        * @param connection destination-socket
+        * @return success
+        */
         bool accept_connection(network::tcp_connection<IP_ADDR_TYPE>& connection) const {
             socklen_t clientlen = sizeof(connection.get_addr().internal_handle());
 

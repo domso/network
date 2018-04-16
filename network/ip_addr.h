@@ -5,7 +5,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-namespace network {____________________________________________________________
+namespace network {
     /**
     * @brief parent wrapper-class any ip-address
     * 
