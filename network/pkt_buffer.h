@@ -45,8 +45,9 @@ public:
             result = (CAST_TYPE*)(m_msgBuffer.data() + m_objCastIndex);
             // increase offset by the size of the simulated instance
             m_objCastIndex += sizeof(CAST_TYPE) * n;
-
         }
+        
+        return result;
     }
 
     /**
