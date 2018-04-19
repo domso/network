@@ -99,6 +99,23 @@ public:
     }
 
     /**
+    * @brief pushes a pkt_buffer in the buffer
+    *
+    * @param input p_input: input data
+    * @return bool: success
+    */
+    bool push_buffer(const pkt_buffer& input) {
+        char* dest = push_next<char>(input.msg_length());
+
+        if (dest != nullptr) {
+            std::strncpy(dest, (const char*) input.data(),  input.msg_length());
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
     * @brief resets the offset/index from castNext
     *
     */
@@ -110,6 +127,13 @@ public:
     * @brief pointer to the internal buffer
     */
     int8_t* data() {
+        return m_msgBuffer.data();
+    }
+
+    /**
+    * @brief pointer to the internal buffer
+    */
+    const int8_t* data() const {
         return m_msgBuffer.data();
     }
 
