@@ -77,7 +77,14 @@ public:
     template <typename MSG_DATA_TYPE>
     std::pair<bool, int> send_data(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = MSG_NOSIGNAL) const {
         static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
-        int result = send(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+        size_t offset = 0;
+        int result = 0;
+        
+        while (result >= 0 && offset < (sizeof(MSG_DATA_TYPE) * numberOfData)) {
+            result = send(this->m_skt, buffer + offset, sizeof(MSG_DATA_TYPE) * (numberOfData - offset), flags);
+            offset += result;
+        }       
+        
         return this->check_error(result);
     }
 
@@ -87,7 +94,7 @@ public:
     * @param MSG_DATA_TYPE type of the data
     * @param buffer destination buffer for new data
     * @param numberOfData size of buffer
-    * @param flags see 'man send()'
+    * @param flags see 'man recv()'
     * @return {success, errno}
     */
     template <typename MSG_DATA_TYPE>
@@ -104,8 +111,15 @@ public:
     * @param flags see 'man send()'
     * @return {success, errno}
     */
-    std::pair<bool, int> send_pkt(pkt_buffer& buffer, const int flags = MSG_NOSIGNAL) const {
-        int result = send(this->m_skt, buffer.data(), buffer.msg_length(), flags);
+    std::pair<bool, int> send_pkt(const pkt_buffer& buffer, const int flags = MSG_NOSIGNAL) const {
+        size_t offset = 0;
+        int result = 0;
+        
+        while (result >= 0 && offset < buffer.msg_length()) {
+            result = send(this->m_skt, buffer.data() + offset, buffer.msg_length() - offset, flags);
+            offset += result;
+        } 
+        
         return this->check_error(result);
     }
 

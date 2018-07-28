@@ -100,7 +100,7 @@ namespace network {
         * @param flags see 'man sendto'
         * @return {success, errno}
         */
-        std::pair<bool, int> send_pkt(IP_ADDR_TYPE& dest, pkt_buffer& buffer, const int flags = 0) const {
+        std::pair<bool, int> send_pkt(const IP_ADDR_TYPE& dest, const pkt_buffer& buffer, const int flags = 0) const {
             int result = sendto(this->m_skt, buffer.data(), buffer.msg_length(), flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle()));
             return this->check_error(result);
         }

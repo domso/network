@@ -36,7 +36,7 @@ public:
     * @return CAST_TYPE*: pointer to an instance of CAST_TYPE or nullptr
     */
     template <typename CAST_TYPE>
-    CAST_TYPE* get_next(const int n = 1) {
+    CAST_TYPE* get_next(const size_t n = 1) {
         static_assert(std::is_trivially_copyable<CAST_TYPE>::value);
         CAST_TYPE* result = nullptr;
         // if the next object is still inside the valid-buffer
@@ -61,7 +61,8 @@ public:
     * @return CAST_TYPE* pointer to an instance of CAST_TYPE or nullptr
     */
     template <typename CAST_TYPE>
-    CAST_TYPE* push_next(const int n = 1) {
+    CAST_TYPE* push_next(const size_t n = 1) {
+        static_assert(std::is_trivially_copyable<CAST_TYPE>::value);
         CAST_TYPE* result = nullptr;
 
         // if the next object is still inside the buffer
@@ -196,7 +197,7 @@ public:
     * - resets the offset/index for castNext
     * @param length: new length | needs to be smaller than the capacity
     */
-    void set_msg_length(int length) {
+    void set_msg_length(size_t length) {
         if (length < 0) {
             length = 0;
         }
@@ -231,7 +232,7 @@ public:
 
     void print() {
         std::cout << std::hex << "| ";
-        for (int i = 0; i < m_msgLength; i++) {
+        for (size_t i = 0; i < m_msgLength; i++) {
             std::cout << (int)m_msgBuffer[i];
             if (((i + 1) & 3) == 0) {
                 std::cout << " ";
@@ -247,9 +248,9 @@ private:
     // internal buffer for network-IO
     std::vector<int8_t> m_msgBuffer;
     // len of the real message
-    int m_msgLength;
+    size_t m_msgLength;
     // address-offset to the next posible object
-    int m_objCastIndex;
+    size_t m_objCastIndex;
 };
 }
 

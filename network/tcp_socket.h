@@ -2,6 +2,7 @@
 #define tcp_socket_h
 
 #include <memory>
+#include <optional>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -71,30 +72,7 @@ namespace network {
             // start listening for new incoming connections
             return listen(this->m_skt, backlog) == 0;
         }
-        
-        /**
-        * @brief accepts new connections on the socket and creates a new tcp_connection-object
-        * 
-        * @return nullptr for any error
-        */
-        std::shared_ptr<network::tcp_connection<IP_ADDR_TYPE>> accept_connection() const {
-            // create object for new connection
-            std::shared_ptr<network::tcp_connection<IP_ADDR_TYPE>> connection = std::make_shared<network::tcp_connection<IP_ADDR_TYPE>>();
-            socklen_t clientlen = sizeof(*(connection->get_addr().internal_handle()));
-
-            // accept new incoming connection
-            int skt = accept(this->m_skt, (struct sockaddr*) connection->get_addr().internal_handle(), &clientlen);
-
-            if (skt == -1) {
-                return std::shared_ptr<network::tcp_connection<IP_ADDR_TYPE>>();
-            }
-
-            // combine socket and connection-object
-            connection->set_socket(skt);
-
-            return connection;
-        }
-        
+               
         /**
         * @brief accepts new connections on the socket and emplace the socket in the given argument
         * 
@@ -114,6 +92,28 @@ namespace network {
             // combine socket and connection-object
             connection.set_socket(skt);
             return true;
+        }
+        
+        /**
+        * @brief accepts new connections on the socket and emplace the socket in the given argument
+        * 
+        * @param connection destination-socket
+        * @return success
+        */
+        std::optional<network::tcp_connection<IP_ADDR_TYPE>> accept_connection() const {
+            network::tcp_connection<IP_ADDR_TYPE> connection;
+            socklen_t clientlen = sizeof(connection.get_addr().internal_handle());
+
+            // accept new incoming connection
+            int skt = accept(this->m_skt, (struct sockaddr*) connection.get_addr().internal_handle(), &clientlen);
+
+            if (skt == -1) {
+                return std::nullopt;
+            }
+
+            // combine socket and connection-object
+            connection.set_socket(skt);
+            return std::move(connection);
         }
     };
 }
