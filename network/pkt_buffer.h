@@ -127,28 +127,42 @@ public:
     /**
     * @brief pointer to the internal buffer
     */
-    int8_t* data() {
+    uint8_t* data() {
         return m_msgBuffer.data();
     }
 
     /**
     * @brief pointer to the internal buffer
     */
-    const int8_t* data() const {
+    const uint8_t* data() const {
         return m_msgBuffer.data();
     }
 
     /**
     * @brief pointer to the remaining internal buffer
     */
-    int8_t* remaining_data() {
+    uint8_t* remaining_data() {
         return m_msgBuffer.data() + m_msgLength;
     }
-
+    
+    /**
+    * @brief pointer to the remaining internal buffer
+    */
+    const uint8_t* remaining_data() const {
+        return m_msgBuffer.data() + m_msgLength;
+    }
+    
     /**
     * @brief pointer to the current position in the internal buffer
     */
-    int8_t* data_offset() {
+    uint8_t* data_offset() {
+        return m_msgBuffer.data() + m_objCastIndex;
+    }
+    
+    /**
+    * @brief pointer to the current position in the internal buffer
+    */
+    const uint8_t* data_offset() const {
         return m_msgBuffer.data() + m_objCastIndex;
     }
 
@@ -230,23 +244,17 @@ public:
         m_objCastIndex = length;
     }
 
-    void print() {
+    void print() const {
         std::cout << std::hex << "| ";
         for (size_t i = 0; i < m_msgLength; i++) {
-            std::cout << (int)m_msgBuffer[i];
-            if (((i + 1) & 3) == 0) {
-                std::cout << " ";
-            }
-            if (((i + 1) & 7) == 0) {
-                std::cout << "| ";
-            }
+            std::cout << (int)m_msgBuffer[i] << " ";
         }
 
         std::cout << std::dec << std::endl;
     }
 private:
     // internal buffer for network-IO
-    std::vector<int8_t> m_msgBuffer;
+    std::vector<uint8_t> m_msgBuffer;
     // len of the real message
     size_t m_msgLength;
     // address-offset to the next posible object
