@@ -11,7 +11,7 @@
 
 namespace network {
 /**
-* @brief A wrapper for the classical tcp-conneaction-sockets
+* @brief A wrapper for the classical tcp-connection-sockets
 *
 */
 template<typename IP_ADDR_TYPE>
