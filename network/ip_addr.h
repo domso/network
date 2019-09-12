@@ -119,7 +119,7 @@ namespace network {
             return tmp_v6;
         }
 
-        const sockaddr_in6* sockaddr_in() const {
+        const sockaddr_in6* internal_handle() const {
             return &m_network_addr_v6;
         }
 
