@@ -49,6 +49,17 @@ public:
         
         return std::move(ssl_connection<IP_ADDR_TYPE>(std::move(connection), ssl));        
     }    
+    
+    ssl_connection<IP_ADDR_TYPE> convert(tcp_connection<IP_ADDR_TYPE>&& connection) {
+        SSL* ssl = SSL_new(m_context);
+        SSL_set_fd(ssl, connection.get_socket());             
+        
+        return std::move(ssl_connection<IP_ADDR_TYPE>(std::move(connection), ssl));           
+    }
+    
+    SSL_CTX* context() {
+        return m_context;
+    }
 private:
     SSL_CTX* m_context;
 };

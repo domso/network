@@ -66,41 +66,27 @@ public:
     }
 
     /**
-    * @brief sends numberOfData * sizeof(MSG_DATA_TYPE) Bytes to the connected socket
+    * @brief sends data
     *
-    * @param MSG_DATA_TYPE type of the data
-    * @param buffer buffer containing the data
-    * @param numberOfData number of elements in the buffer
+    * @param region memory region to send
     * @param flags see 'man send()'
     * @return {success, errno}
     */
-    template <typename MSG_DATA_TYPE>
-    std::pair<bool, int> send_data(const MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = MSG_NOSIGNAL) const {
-        static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
-        size_t offset = 0;
-        int result = 0;
-        
-        while (result >= 0 && offset < (sizeof(MSG_DATA_TYPE) * numberOfData)) {
-            result = send(this->m_skt, buffer + offset, sizeof(MSG_DATA_TYPE) * (numberOfData - offset), flags);
-            offset += result;
-        }       
+    std::pair<bool, int> send_data(const memory_region& region, const int flags = MSG_NOSIGNAL) const {
+        int result = send(this->m_skt, region.data(), region.size(), flags);
         
         return this->check_error(result);
     }
 
     /**
-    * @brief receives maximal numberOfData * sizeof(MSG_DATA_TYPE) Bytes and stores them into the buffer
+    * @brief receives data
     *
-    * @param MSG_DATA_TYPE type of the data
-    * @param buffer destination buffer for new data
-    * @param numberOfData size of buffer
+    * @param region memory region for recv
     * @param flags see 'man recv()'
     * @return {success, errno}
     */
-    template <typename MSG_DATA_TYPE>
-    std::pair<bool, int> recv_data(MSG_DATA_TYPE* buffer, const int numberOfData, const int flags = 0) const {
-        static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
-        int result = recv(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags);
+    std::pair<bool, int> recv_data(memory_region& region, const int flags = 0) const {
+        int result = recv(this->m_skt, region.data(), region.size(), flags);
         return this->check_error(result);
     }
 
@@ -111,14 +97,13 @@ public:
     * @param flags see 'man send()'
     * @return {success, errno}
     */
-    std::pair<bool, int> send_pkt(const pkt_buffer& buffer, const int flags = MSG_NOSIGNAL) const {
-        size_t offset = 0;
-        int result = 0;
-        
-        while (result >= 0 && offset < buffer.msg_length()) {
-            result = send(this->m_skt, buffer.data() + offset, buffer.msg_length() - offset, flags);
-            offset += result;
-        } 
+    std::pair<bool, int> send_pkt(pkt_buffer& buffer, const int flags = MSG_NOSIGNAL) const {
+        auto region = buffer.readable_region();
+        int result = send(this->m_skt, region.data(), region.size(), flags);
+        if (result > 0) {
+            region = region.splice(0, result);
+            buffer.read(region);
+        }
         
         return this->check_error(result);
     }
@@ -131,13 +116,13 @@ public:
     * @return {success, errno}
     */
     std::pair<bool, int> recv_pkt(pkt_buffer& buffer, const int flags = 0) const {
-        int result = recv(this->m_skt, buffer.data(), buffer.capacity(), flags);
-        if (result < 1) {
-            buffer.set_msg_length(0);
-        } else {
-            buffer.set_msg_length(result);
-        }
-
+        auto region = buffer.writeable_region();
+        int result = recv(this->m_skt, region.data(), region.size(), flags);
+        if (result > 0) {
+            region = region.splice(0, result);
+            buffer.write(region);
+        }       
+        
         return this->check_error(result);
     }
 };

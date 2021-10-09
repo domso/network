@@ -24,6 +24,9 @@ namespace network {
         }
         tcp_socket(const tcp_socket& that) = delete;
         
+        tcp_socket(tcp_socket&& conn) : base_socket<IP_ADDR_TYPE>(std::move(conn)) {
+
+        }
         /**
         * @brief closes the socket
         * 

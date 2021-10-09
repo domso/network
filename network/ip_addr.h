@@ -1,5 +1,4 @@
-#ifndef ip_addr_h
-#define ip_addr_h
+#pragma once
 
 #include <string>
 #include <string.h>
@@ -131,6 +130,4 @@ namespace network {
         sockaddr_in6 m_network_addr_v6;
     };
 }
-
-#endif
 

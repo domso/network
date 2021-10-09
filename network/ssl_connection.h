@@ -1,7 +1,11 @@
 #pragma once
 
 #include "tcp_connection.h"
+#include "status.h"
 #include <openssl/ssl.h>
+#include <openssl/bio.h>
+
+#include <iostream>
 
 namespace network {
 /**
@@ -11,6 +15,10 @@ namespace network {
 template<typename IP_ADDR_TYPE>
 class ssl_connection {
 public:
+    ssl_connection() : m_ssl(nullptr) {
+        
+    }
+    
     ssl_connection(tcp_connection<IP_ADDR_TYPE>&& connection, SSL* sslHandle) : m_connection(std::move(connection)), m_ssl(sslHandle) {
         
     }
@@ -38,61 +46,88 @@ public:
     }
 
     /**
-    * @brief sends numberOfData * sizeof(MSG_DATA_TYPE) Bytes
-    *
-    * @param MSG_DATA_TYPE type of the data
-    * @param buffer buffer containing the data
-    * @param numberOfData number of elements in the buffer
-    * @return {success, number of send bytes}
+    * @brief gets current socket
     */
-    template <typename MSG_DATA_TYPE>
-    std::pair<bool, int> send_data(const MSG_DATA_TYPE* buffer, const int numberOfData) const {
-        static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
+    int get_socket() {
+        return m_connection.get_socket();
+    }
         
-        int result = SSL_write(m_ssl, buffer, sizeof(MSG_DATA_TYPE) * numberOfData);
-        return {result > 0, result};
+    /**
+    * @brief sends bytes
+    *
+    * @param region memory_region to send
+    * @return {status, SSL_write return value}
+    */
+    std::pair<status, int> send_data(const memory_region& region) {        
+        return build_return(SSL_write(m_ssl, region.data(), region.size()));
     }
 
     /**
-    * @brief receives maximal numberOfData * sizeof(MSG_DATA_TYPE) Bytes and stores them into the buffer
+    * @brief receives bytes
     *
-    * @param MSG_DATA_TYPE type of the data
-    * @param buffer destination buffer for new data
-    * @param numberOfData size of buffer
-    * @return {success, number of send bytes}
+    * @param region memory for recv
+    * @return {status, SSL_read return value}
     */
-    template <typename MSG_DATA_TYPE>
-    std::pair<bool, int> recv_data(MSG_DATA_TYPE* buffer, const int numberOfData) const {
-        static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
-        
-        int result = SSL_read(m_ssl, buffer, sizeof(MSG_DATA_TYPE) * numberOfData);      
-        return {result > 0, result};
+    std::pair<status, int> recv_data(memory_region& region) {        
+        return build_return(SSL_read(m_ssl, region.data(), region.size()));      
     }
 
     /**
     * @brief sends buffer.msgLen()-Bytes
     *
     * @param buffer buffer containing the data
-    * @return {success, number of send bytes}
+    * @return {status, SSL_write return value}
     */
-    std::pair<bool, int> send_pkt(const pkt_buffer& buffer) const {
-        int result = SSL_write(m_ssl, buffer.data(), buffer.msg_length());
-        return {result > 0, result};
+    std::pair<status, int> send_pkt(pkt_buffer& buffer) {
+        auto region = buffer.readable_region();
+        int result = SSL_write(m_ssl, region.data(), region.size());
+        
+        if (result > 0) {
+            region = region.splice(0, result);
+            buffer.read(region);
+        }
+        
+        return build_return(result);
     }
 
     /**
     * @brief receives maximal buffer.capacity-Bytes and stores them into the buffer
     *
     * @param buffer reference to the destination buffer
-    * @return {success, number of send bytes}
+    * @return {status, SSL_read return value}
     */
-    std::pair<bool, int> recv_pkt(pkt_buffer& buffer) const {       
-        int result = SSL_read(m_ssl, buffer.data(), buffer.capacity());   
-        buffer.set_msg_length(result);
-        return {result > 0, result};
+    std::pair<status, int> recv_pkt(pkt_buffer& buffer) {       
+        auto region = buffer.writeable_region();
+        int result = SSL_read(m_ssl, region.data(), region.size());
+        
+        if (result > 0) {
+            region = region.splice(0, result);
+            buffer.write(region);
+        }
+        
+        return build_return(result);
     }
 
+    std::pair<status, int> accept() {    
+        return build_return(SSL_accept(m_ssl));
+    }
 private:
+    std::pair<status, int> build_return(const int result) const {
+        if (result > 0) {
+            return {status::ok, result};
+        } else {
+            int error = SSL_get_error(m_ssl, result);
+            
+            if (error == SSL_ERROR_WANT_READ) {
+                return {status::retry_read, result};
+            } else if (error == SSL_ERROR_WANT_WRITE) {
+                return {status::retry_write, result};
+            } else {
+                return {status::error, result};
+            }
+        }
+    }
+    
     tcp_connection<IP_ADDR_TYPE> m_connection;
     SSL* m_ssl;
 };

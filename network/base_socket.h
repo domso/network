@@ -1,8 +1,8 @@
-#ifndef base_socket_def
-#define base_socket_def
+#pragma once
 
 #include "unistd.h"
 #include "ip_addr.h"
+#include "fcntl.h"
 
 namespace network {
     /**
@@ -22,6 +22,7 @@ namespace network {
             
             m_addr = conn.m_addr;
         }
+        base_socket& operator=(base_socket& conn) = delete;
         base_socket& operator=(base_socket&& conn) {            
             if (!is_closed()) {
                 close_socket();
@@ -134,6 +135,18 @@ namespace network {
         void shut_RDWR() const {
             shutdown(m_skt, SHUT_RDWR);
         }
+        
+        /**
+        * @brief sets non blocking
+        */
+        void set_blocking(const bool enable) const {
+            int save_fd = fcntl(m_skt, F_GETFL);
+            save_fd |= SOCK_NONBLOCK;      
+            if (enable) {         
+                save_fd ^= SOCK_NONBLOCK;                      
+            }
+            fcntl(m_skt, F_SETFL, save_fd);
+        }
     protected:        
         /**
         * @brief checks errno, if result = -1
@@ -157,6 +170,3 @@ namespace network {
         IP_ADDR_TYPE m_addr;
     };
 }
-
-#endif
-

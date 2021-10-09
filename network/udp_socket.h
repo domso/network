@@ -58,37 +58,29 @@ namespace network {
         }
         
         /**
-        * @brief sends numberOfData*sizeof(MSG_DATA_TYPE) Bytes starting from buffer to the destination-address
+        * @brief sends data
         * 
-        * @param MSG_DATA_TYPE type of the data
         * @param dest destination-address
-        * @param buffer pointer to atleast one valid MSG_DATA_TYPE-instance
-        * @param numberOfData number of instances in the buffer
+        * @param region region to send
         * @param flags see 'man sendto'
         * @return {success, errno}
         */
-        template <typename MSG_DATA_TYPE>
-        std::pair<bool, int> send_data(const IP_ADDR_TYPE& dest, const MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
-            static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
-            int result = sendto(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle())) / sizeof(MSG_DATA_TYPE);
+        std::pair<bool, int> send_data(const IP_ADDR_TYPE& dest, const memory_region& region, const int flags = 0) const {
+            int result = sendto(this->m_skt, region.data(), region.size(), flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle()));
             return this->check_error(result);
         }
                 
         /**
-        * @brief receives maximal numberOfData*sizeof(MSG_DATA_TYPE) Bytes from any source-address and stores them into the buffer
+        * @brief receives data
         * 
-        * @param MSG_DATA_TYPE type of the data
+        * @param region region to recv
         * @param src source-address
-        * @param buffer pointer to atleast one valid MSG_DATA_TYPE-instance
-        * @param numberOfData number of instances in the buffer
         * @param flags see 'man recvfrom'
         * @return {success, errno}
         */
-        template <typename MSG_DATA_TYPE>
-        std::pair<bool, int> recv_data(IP_ADDR_TYPE& src, MSG_DATA_TYPE* buffer, const int numberOfData = 1, const int flags = 0) const {
-            static_assert(std::is_trivially_copyable<MSG_DATA_TYPE>::value);
+        std::pair<bool, int> recv_data(IP_ADDR_TYPE& src, memory_region& region, const int flags = 0) const {
             socklen_t address_len = sizeof(*src.internal_handle());
-            int result = recvfrom(this->m_skt, buffer, sizeof(MSG_DATA_TYPE) * numberOfData, flags, (sockaddr*) src.internal_handle(), &address_len) / sizeof(MSG_DATA_TYPE);
+            int result = recvfrom(this->m_skt, region.data(), region.size(), flags, (sockaddr*) src.internal_handle(), &address_len);
             return this->check_error(result);
         }
         
@@ -100,8 +92,15 @@ namespace network {
         * @param flags see 'man sendto'
         * @return {success, errno}
         */
-        std::pair<bool, int> send_pkt(const IP_ADDR_TYPE& dest, const pkt_buffer& buffer, const int flags = 0) const {
-            int result = sendto(this->m_skt, buffer.data(), buffer.msg_length(), flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle()));
+        std::pair<bool, int> send_pkt(const IP_ADDR_TYPE& dest, pkt_buffer& buffer, const int flags = 0) const {
+            auto region = buffer.readable_region();
+            int result = sendto(this->m_skt, region.data(), region.size(), flags, (sockaddr*) dest.internal_handle(), sizeof(*dest.internal_handle()));
+            
+            if (result > 0) {
+                region = region.splice(0, result);
+                buffer.read(region);
+            }            
+            
             return this->check_error(result);
         }
         
@@ -115,11 +114,11 @@ namespace network {
         */
         std::pair<bool, int> recv_pkt(IP_ADDR_TYPE& src, pkt_buffer& buffer, const int flags = 0) const {            
             socklen_t address_len = sizeof(*src.internal_handle());
-            int result = recvfrom(this->m_skt, buffer.data(), buffer.capacity(), flags, (sockaddr*) src.internal_handle(), &address_len);
-            if (result == -1) {
-                buffer.set_msg_length(0);
-            } else {
-                buffer.set_msg_length(result);
+            auto region = buffer.writeable_region();
+            int result = recvfrom(this->m_skt, region.data(), region.size(), flags, (sockaddr*) src.internal_handle(), &address_len);
+            if (result > 0) {
+                region = region.splice(0, result);
+                buffer.write(region);
             }
             
             return this->check_error(result);
