@@ -5,6 +5,9 @@
 #include "sys/epoll.h"
 #include "sys/eventfd.h"
 #include <assert.h>
+#include <unordered_map>
+#include <mutex>
+#include <optional>
 #include "wait_ops.h"
 
 namespace network {    
@@ -29,11 +32,12 @@ namespace network {
         void operator=(const socket_container&) = delete;
         void operator=(const socket_container&&) = delete;
         
-        void add_socket(T&& skt) {
-            T* new_skt = new T(std::move(skt));            
+        void add_socket(T&& skt) {        
+            auto new_skt = new T(std::move(skt));
             add_fd(new_skt->get_socket(), reinterpret_cast<void*>(new_skt), true);
-        }        
-        
+            m_item_map.insert({new_skt->get_id(), new_skt});
+        }
+                
         bool wait(std::function<wait_ops(T& skt)> call, const int timeout) {
             int result = epoll_wait(m_epfd, m_events.data(), m_events.size(), timeout);
             assert(result >= 0);           
@@ -44,30 +48,11 @@ namespace network {
                     uint64_t buf;
                     assert(read(m_eventfd, &buf, sizeof(buf)) != -1);
                 } else {
-                    int fd = skt->get_socket();
-                    auto op = call(*skt);
-                    
-                    switch (op) {
-                        case wait_write: {
-                            set_rw(fd, skt, false, true);  
-                            break;
-                        }
-                        case wait_read: {
-                            set_rw(fd, skt, true, false);   
-                            break;                         
-                        }
-                        case wait_read_write: {
-                            set_rw(fd, skt, true, true);
-                            break;
-                        }
-                        case remove: {
-                            remove_fd(fd);
-                            delete skt;  
-                            break;                            
-                        }
-                    }
+                    call_callback(skt, call);                    
                 }                
-            }
+            }       
+            
+            result += clear_force_list(call);
             
             return result > 0;
         }        
@@ -76,7 +61,55 @@ namespace network {
             uint64_t buf = 1;
             assert(write(m_eventfd, &buf, sizeof(buf)) != -1);
         }        
-    private: 
+        
+        void force_call(const uint64_t id) {
+            std::lock_guard<std::mutex> lg(m_mutex);
+            m_force_call_list.push_back(id);
+        }
+    private:         
+        void call_callback(T* skt, std::function<wait_ops(T& skt)>& call) {
+            int fd = skt->get_socket();
+            auto op = call(*skt);
+            
+            switch (op) {
+                case wait_write: {
+                    set_rw(fd, skt, false, true);  
+                    break;
+                }
+                case wait_read: {
+                    set_rw(fd, skt, true, false);   
+                    break;                         
+                }
+                case wait_read_write: {
+                    set_rw(fd, skt, true, true);
+                    break;
+                }
+                case remove: {
+                    remove_fd(fd);
+                    m_item_map.erase(skt->get_id());
+                    delete skt;  
+                    break;                            
+                }
+            }
+        }
+        
+        int clear_force_list(std::function<wait_ops(T& skt)>& call) {
+            std::lock_guard<std::mutex> lg(m_mutex);
+            int result = 0;
+            
+            for (const auto c : m_force_call_list) {
+                auto find = m_item_map.find(c);
+                if (find != m_item_map.end()) {
+                    call_callback(find->second, call);
+                    result++;
+                }
+            }
+            
+            m_force_call_list.clear();
+                
+            return result;
+        }
+        
         void add_fd(int fd, void* ptr, const bool write) {
             epoll_event event;            
             event.events = EPOLLIN | EPOLLPRI;
@@ -114,6 +147,10 @@ namespace network {
         }
         
         std::vector<epoll_event> m_events;
+        std::unordered_map<uint64_t, T*> m_item_map;
+        std::mutex m_mutex;
+        std::vector<uint64_t> m_force_call_list;
+        
         int m_epfd;
         int m_eventfd;
     };  

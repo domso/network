@@ -54,6 +54,16 @@ namespace network {
             return std::nullopt;
         }    
         
+        template<typename T>
+        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() {
+            return T(m_data, m_size);
+        }
+
+        template<typename T>
+        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() {
+            return T(reinterpret_cast<char*>(m_data), m_size);
+        }
+        
         memory_region splice(const size_t pos, const size_t n) const {            
             if (pos + n <= m_size) {
                 return memory_region(m_data + pos, n);
