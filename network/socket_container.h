@@ -34,7 +34,7 @@ namespace network {
         
         void add_socket(T&& skt) {        
             auto new_skt = new T(std::move(skt));
-            add_fd(new_skt->get_socket(), reinterpret_cast<void*>(new_skt), true);
+            add_fd(new_skt->get_fd(), reinterpret_cast<void*>(new_skt), true);
             m_item_map.insert({new_skt->get_id(), new_skt});
         }
                 
@@ -65,10 +65,11 @@ namespace network {
         void force_call(const uint64_t id) {
             std::lock_guard<std::mutex> lg(m_mutex);
             m_force_call_list.push_back(id);
+            interrupt();
         }
     private:         
         void call_callback(T* skt, std::function<wait_ops(T& skt)>& call) {
-            int fd = skt->get_socket();
+            int fd = skt->get_fd();
             auto op = call(*skt);
             
             switch (op) {
@@ -93,20 +94,28 @@ namespace network {
             }
         }
         
-        int clear_force_list(std::function<wait_ops(T& skt)>& call) {
+        std::vector<uint64_t> get_force_list() {
             std::lock_guard<std::mutex> lg(m_mutex);
+            return std::move(m_force_call_list);            
+        }
+        
+        int clear_force_list(std::function<wait_ops(T& skt)>& call) {
+            std::vector<uint64_t> list;
             int result = 0;
             
-            for (const auto c : m_force_call_list) {
+            {                
+                std::lock_guard<std::mutex> lg(m_mutex);
+                list = std::move(m_force_call_list);      
+            }
+                        
+            for (const auto c : list) {
                 auto find = m_item_map.find(c);
-                if (find != m_item_map.end()) {
+                if (find != m_item_map.end()) {                    
                     call_callback(find->second, call);
                     result++;
                 }
             }
-            
-            m_force_call_list.clear();
-                
+                            
             return result;
         }
         

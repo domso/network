@@ -111,6 +111,10 @@ public:
     std::pair<status, int> accept() {    
         return build_return(SSL_accept(m_ssl));
     }
+    
+    std::string to_string() {
+        return m_connection.get_addr().ip() + ":" + std::to_string(m_connection.get_addr().port());
+    }
 private:
     std::pair<status, int> build_return(const int result) const {
         if (result > 0) {

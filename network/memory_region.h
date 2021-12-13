@@ -55,12 +55,12 @@ namespace network {
         }    
         
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() {
+        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() const {
             return T(m_data, m_size);
         }
 
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() {
+        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() const {
             return T(reinterpret_cast<char*>(m_data), m_size);
         }
         
@@ -139,6 +139,27 @@ namespace network {
             uint8_t* m_data;
         };
         
+        class const_iterator {
+        public:
+            const_iterator() : m_data(nullptr) {};
+            const_iterator(const uint8_t* data) : m_data(data) {};
+            
+            bool operator==(const const_iterator& it) const {return m_data == it.m_data;}
+            bool operator!=(const const_iterator& it) const {return m_data != it.m_data;}
+            bool operator<(const const_iterator& it) const {return m_data < it.m_data;}
+            bool operator>(const const_iterator& it) const {return m_data > it.m_data;}
+            bool operator<=(const const_iterator& it) const {return m_data <= it.m_data;}
+            bool operator>=(const const_iterator& it) const {return m_data >= it.m_data;}
+            const_iterator operator++(int) {return const_iterator(m_data++);}
+            const_iterator operator--(int) {return const_iterator(m_data--);}
+            const_iterator& operator++() {m_data++; return *this;}
+            const_iterator& operator--() {m_data--; return *this;}      
+            
+            const uint8_t& operator*() {return *m_data;}
+        private:
+            const uint8_t* m_data;
+        };
+        
         iterator begin() {
             return iterator(m_data);
         }
@@ -153,7 +174,23 @@ namespace network {
         
         iterator rend() {
             return iterator(m_data - 1);
-        }        
+        }   
+        
+        const_iterator begin() const {
+            return const_iterator(m_data);
+        }
+        
+        const_iterator rbegin() const {
+            return const_iterator(m_data + m_size - 1);
+        }
+        
+        const_iterator end() const {
+            return const_iterator(m_data + m_size);
+        }
+        
+        const_iterator rend() const {
+            return const_iterator(m_data - 1);
+        }         
     private:
         uint8_t* m_data;
         size_t m_size;
