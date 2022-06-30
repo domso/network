@@ -7,15 +7,6 @@
 
 #include "ssl_connection.h"
 
-int pem_passwd_cb(char *buf, int size, int rwflag, void *password)
-{
-    strncpy(buf, (char *)(password), 4);
-    buf[4] = '\0';
-    return 5;
-}
-
-const char* pw = "test";
-
 namespace network {
 template<typename IP_ADDR_TYPE>
 class ssl_context {
@@ -34,17 +25,18 @@ public:
         
         EVP_cleanup();
     }
-
     
-    
-    bool init(std::string cert_file, std::string key_file) {
+    bool init(std::string cert_file, std::string key_file, std::string pw = "") {
         const SSL_METHOD* method = SSLv23_server_method();
         m_context = SSL_CTX_new(method);   
         
         if (m_context != nullptr) {
             SSL_CTX_set_ecdh_auto(ctx, 1);
-            SSL_CTX_set_default_passwd_cb_userdata(m_context, (void*)pw);
-            SSL_CTX_set_default_passwd_cb(m_context, pem_passwd_cb);
+            if (pw != "") {
+                m_password = pw;
+                SSL_CTX_set_default_passwd_cb_userdata(m_context, (void*)m_password.c_str());
+                SSL_CTX_set_default_passwd_cb(m_context, pem_passwd_cb);
+            }
             
             return SSL_CTX_use_certificate_file(m_context, cert_file.c_str(), SSL_FILETYPE_PEM) == 1 &&
                    SSL_CTX_use_PrivateKey_file(m_context, key_file.c_str(), SSL_FILETYPE_PEM) == 1;
@@ -74,6 +66,14 @@ public:
         return m_context;
     }
 private:
+    std::string m_password;
+
+    static int pem_passwd_cb(char* buf, int size, int rwflag, void* password) {
+        strncpy(buf, static_cast<char*>(password), 4);
+        buf[4] = '\0';
+        return 5;
+    }
+
     SSL_CTX* m_context;
 };
 

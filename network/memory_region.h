@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <optional>
 
+#include <stdint.h>
+
 namespace network {
     class memory_region {
     public:
@@ -64,7 +66,7 @@ namespace network {
             return T(reinterpret_cast<char*>(m_data), m_size);
         }
         
-        memory_region splice(const size_t pos, const size_t n) const {            
+        memory_region splice(const size_t pos, const size_t n) {            
             if (pos + n <= m_size) {
                 return memory_region(m_data + pos, n);
             }       
@@ -76,11 +78,31 @@ namespace network {
             return memory_region(nullptr, 0);
         }
         
-        memory_region offset_front(const size_t offset) const {
+        memory_region offset_front(const size_t offset) {
             return splice(offset, m_size - offset);
         }
             
-        memory_region offset_back(const size_t offset) const {
+        memory_region offset_back(const size_t offset) {
+            return splice(0, m_size - offset);
+        }
+        
+        const memory_region splice(const size_t pos, const size_t n) const {            
+            if (pos + n <= m_size) {
+                return memory_region(m_data + pos, n);
+            }       
+            
+            if (pos < m_size) {
+                return memory_region(m_data + pos, m_size - pos);
+            }
+            
+            return memory_region(nullptr, 0);
+        }
+        
+        const memory_region offset_front(const size_t offset) const {
+            return splice(offset, m_size - offset);
+        }
+            
+        const memory_region offset_back(const size_t offset) const {
             return splice(0, m_size - offset);
         }
         
