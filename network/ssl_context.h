@@ -31,7 +31,7 @@ public:
         m_context = SSL_CTX_new(method);   
         
         if (m_context != nullptr) {
-            SSL_CTX_set_ecdh_auto(ctx, 1);
+            SSL_CTX_set_ecdh_auto(m_context, 1);
             if (pw != "") {
                 m_password = pw;
                 SSL_CTX_set_default_passwd_cb_userdata(m_context, (void*)m_password.c_str());
