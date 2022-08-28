@@ -11,16 +11,22 @@ namespace network {
     public:
         memory_region() : m_data(nullptr), m_size(0) {}
         memory_region(uint8_t* data, size_t size) : m_data(data), m_size(size) {}
-        
+
         template<typename T>
-        void use(T& container) {
+        memory_region(T& container) {
             m_data = reinterpret_cast<uint8_t*>(container.data());
-            m_size = container.size();
+            m_size = container.size() * sizeof(decltype(*container.data()));
         }    
         
         template<typename T>
-        void use(T* data, const size_t size) {
-            m_data = reinterpret_cast<uint8_t*>(data);
+        void use(const T& container) {
+            m_data = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(container.data()));
+            m_size = container.size() * sizeof(decltype(*container.data()));
+        }    
+        
+        template<typename T>
+        void use(const T* data, const size_t size) {
+            m_data = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(data));
             m_size = size;
         }    
         
@@ -57,12 +63,22 @@ namespace network {
         }    
         
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() const {
+        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() {
             return T(m_data, m_size);
         }
 
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() const {
+        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() {
+            return T(reinterpret_cast<char*>(m_data), m_size);
+        }
+
+        template<typename T>
+        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, const T>::type export_to() const {
+            return T(m_data, m_size);
+        }
+
+        template<typename T>
+        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, const T>::type export_to() const {
             return T(reinterpret_cast<char*>(m_data), m_size);
         }
         
