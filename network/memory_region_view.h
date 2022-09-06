@@ -6,35 +6,32 @@
 #include <charconv>
 
 #include <stdint.h>
-#include "memory_region_view.h"
 
 namespace network {
-    class memory_region {
+    class memory_region_view {
     public:
-        memory_region() : m_data(nullptr), m_size(0) {}
-        memory_region(uint8_t* data, const size_t size) : m_data(data), m_size(size) {}
+        friend class memory_region;
+
+        memory_region_view() : m_data(nullptr), m_size(0) {}
+        memory_region_view(const uint8_t* data, const size_t size) : m_data(data), m_size(size) {}
 
         template<typename T>
-        memory_region(T& container) {
-            m_data = reinterpret_cast<uint8_t*>(container.data());
-            m_size = container.size() * sizeof(decltype(*container.data()));
-        }    
-
-        template<typename T>
-        void use(T& container) {
-            m_data = reinterpret_cast<uint8_t*>(container.data());
+        memory_region_view(const T& container) {
+            m_data = reinterpret_cast<const uint8_t*>(container.data());
             m_size = container.size() * sizeof(decltype(*container.data()));
         }    
         
         template<typename T>
-        void use(T* data, const size_t size) {
+        void use(const T& container) {
+            m_data = reinterpret_cast<const uint8_t*>(container.data());
+            m_size = container.size() * sizeof(decltype(*container.data()));
+        }    
+        
+        template<typename T>
+        void use(const T* data, const size_t size) {
             m_data = reinterpret_cast<const uint8_t*>(data);
             m_size = size;
         }    
-        
-        uint8_t* data() {
-            return m_data;
-        }
         
         const uint8_t* data() const {
             return m_data;
@@ -53,16 +50,6 @@ namespace network {
             
             return std::nullopt;
         }
-        
-        template<typename T>
-        std::optional<T*> cast_to() {
-            static_assert(std::is_trivially_copyable<T>::value);
-            if (m_size == sizeof(T)) {
-                return reinterpret_cast<T*>(m_data);
-            }
-            
-            return std::nullopt;
-        }    
 
         template<typename T>
         std::optional<T> convert_to_int() const {
@@ -76,42 +63,32 @@ namespace network {
         }
         
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, T>::type export_to() {
+        typename std::enable_if<std::is_constructible<T, const uint8_t*, size_t>::value, const T>::type export_to() const {
             return T(m_data, m_size);
         }
 
         template<typename T>
-        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, T>::type export_to() {
-            return T(reinterpret_cast<char*>(m_data), m_size);
-        }
-
-        template<typename T>
-        typename std::enable_if<std::is_constructible<T, uint8_t*, size_t>::value, const T>::type export_to() const {
-            return T(m_data, m_size);
-        }
-
-        template<typename T>
-        typename std::enable_if<std::is_constructible<T, char*, size_t>::value, const T>::type export_to() const {
-            return T(reinterpret_cast<char*>(m_data), m_size);
+        typename std::enable_if<std::is_constructible<T, const char*, size_t>::value, const T>::type export_to() const {
+            return T(reinterpret_cast<const char*>(m_data), m_size);
         }
         
-        memory_region splice(const size_t pos, const size_t n) const {            
+        memory_region_view splice(const size_t pos, const size_t n) const {            
             if (pos + n <= m_size) {
-                return memory_region(m_data + pos, n);
+                return memory_region_view(m_data + pos, n);
             }       
             
             if (pos < m_size) {
-                return memory_region(m_data + pos, m_size - pos);
+                return memory_region_view(m_data + pos, m_size - pos);
             }
             
-            return memory_region(nullptr, 0);
+            return memory_region_view(nullptr, 0);
         }
         
-        memory_region offset_front(const size_t offset) const {
+        memory_region_view offset_front(const size_t offset) const {
             return splice(offset, m_size - offset);
         }
             
-        memory_region offset_back(const size_t offset) const {
+        memory_region_view offset_back(const size_t offset) const {
             return splice(0, m_size - offset);
         }
         
@@ -138,37 +115,12 @@ namespace network {
                    region.contains(reinterpret_cast<const void*>(data() + size()));
         }
         
-        void move(const memory_region& region) {
-            std::memmove(m_data, region.m_data, std::min(m_size, region.size()));
-        }
-        
         template<typename T>
         void push_back_into(T& container) const {
             for (size_t i = 0; i < m_size; i++) {
                 container.push_back(m_data[i]);
             }
         }
-        
-        class iterator {
-        public:
-            iterator() : m_data(nullptr) {};
-            iterator(uint8_t* data) : m_data(data) {};
-            
-            bool operator==(const iterator& it) const {return m_data == it.m_data;}
-            bool operator!=(const iterator& it) const {return m_data != it.m_data;}
-            bool operator<(const iterator& it) const {return m_data < it.m_data;}
-            bool operator>(const iterator& it) const {return m_data > it.m_data;}
-            bool operator<=(const iterator& it) const {return m_data <= it.m_data;}
-            bool operator>=(const iterator& it) const {return m_data >= it.m_data;}
-            iterator operator++(int) {return iterator(m_data++);}
-            iterator operator--(int) {return iterator(m_data--);}
-            iterator& operator++() {m_data++; return *this;}
-            iterator& operator--() {m_data--; return *this;}      
-            
-            uint8_t& operator*() {return *m_data;}
-        private:
-            uint8_t* m_data;
-        };
         
         class const_iterator {
         public:
@@ -191,22 +143,6 @@ namespace network {
             const uint8_t* m_data;
         };
         
-        iterator begin() {
-            return iterator(m_data);
-        }
-        
-        iterator rbegin() {
-            return iterator(m_data + m_size - 1);
-        }
-        
-        iterator end() {
-            return iterator(m_data + m_size);
-        }
-        
-        iterator rend() {
-            return iterator(m_data - 1);
-        }   
-        
         const_iterator begin() const {
             return const_iterator(m_data);
         }
@@ -223,7 +159,7 @@ namespace network {
             return const_iterator(m_data - 1);
         }         
     private:
-        uint8_t* m_data;
+        const uint8_t* m_data;
         size_t m_size;
     };
 }

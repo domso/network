@@ -68,11 +68,11 @@ public:
     /**
     * @brief sends data
     *
-    * @param region memory region to send
+    * @param region memory region view to send
     * @param flags see 'man send()'
     * @return {success, errno}
     */
-    std::pair<bool, int> send_data(const memory_region& region, const int flags = MSG_NOSIGNAL) const {
+    std::pair<bool, int> send_data(const memory_region_view& region, const int flags = MSG_NOSIGNAL) const {
         int result = send(this->m_skt, region.data(), region.size(), flags);
         
         return this->check_error(result);

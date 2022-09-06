@@ -55,10 +55,10 @@ public:
     /**
     * @brief sends bytes
     *
-    * @param region memory_region to send
+    * @param region memory_region_view to send
     * @return {status, SSL_write return value}
     */
-    std::pair<status, int> send_data(const memory_region& region) {        
+    std::pair<status, int> send_data(const memory_region_view& region) {        
         return build_return(SSL_write(m_ssl, region.data(), region.size()));
     }
 
