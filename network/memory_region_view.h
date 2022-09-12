@@ -54,7 +54,7 @@ namespace network {
         template<typename T>
         std::optional<T> convert_to_int() const {
             T result;
-            auto [ptr, ec] = std::from_chars(reinterpret_cast<char*>(m_data), reinterpret_cast<char*>(m_data) + m_size, result);
+            auto [ptr, ec] = std::from_chars(reinterpret_cast<const char*>(m_data), reinterpret_cast<const char*>(m_data) + m_size, result);
             if (ec == std::errc()) {
                 return result;
             } else {
